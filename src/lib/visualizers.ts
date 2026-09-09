@@ -1,5 +1,10 @@
 /** Heuristic visualizer math — estimated from CC values, not hardware dumps. */
 
+import { ccToOptionIndex } from "./parameters";
+
+/** Cycles shown across the LFO / oscillator canvases (1 = fully zoomed in). */
+export const WAVEFORM_DISPLAY_CYCLES = 2.5;
+
 export function modEnvTimeSeconds(cc: number, maxSecs: number): number {
   const n = Math.max(0, Math.min(127, cc)) / 127;
   return 0.001 + n * n * maxSecs;
@@ -56,6 +61,12 @@ export function adsrHasRise(attackCc: number, decayCc: number, sustainCc: number
   return attackCc > 0 || decayCc > 0 || sustainCc > 0;
 }
 
+/** Deterministic -1..1 from an integer, for S&H / noise traces that stay stable while scrolling. */
+function hashSigned(n: number): number {
+  const s = Math.sin(n * 12.9898) * 43758.5453;
+  return (s - Math.floor(s)) * 2 - 1;
+}
+
 export function sampleWaveform(
   type: "saw" | "invSaw" | "triangle" | "square" | "random" | "noise",
   phase: number,
@@ -72,25 +83,54 @@ export function sampleWaveform(
     case "square":
       return p < pulseWidth ? 1 : -1;
     case "random":
-      return Math.sin(p * Math.PI * 2 * 7.3) * 0.6 + Math.sin(p * Math.PI * 2 * 13.1) * 0.4;
+      // Sample-and-hold: stepped levels, not a lumpy sine.
+      return hashSigned(Math.floor(phase * 8));
     case "noise":
-      return (Math.random() - 0.5) * 2;
+      return hashSigned(Math.floor(phase * 96));
     default:
       return 0;
   }
+}
+
+/** Schematic 16-step DRAW table (real table is PRM-only). */
+const DRAW_PREVIEW = [
+  -0.2, 0.4, 0.9, 0.6, -0.1, -0.7, -0.4, 0.2, 0.85, 0.3, -0.5, -0.9, -0.2, 0.5, 1, -0.15,
+];
+
+export function sampleDrawWaveform(drawMode: number, phase: number): number {
+  const steps = DRAW_PREVIEW.length;
+  const p = ((phase % 1) + 1) % 1;
+  const idx = Math.min(steps - 1, Math.floor(p * steps));
+  if (drawMode === 1) return DRAW_PREVIEW[idx];
+  const next = DRAW_PREVIEW[(idx + 1) % steps];
+  const t = p * steps - idx;
+  return DRAW_PREVIEW[idx] + (next - DRAW_PREVIEW[idx]) * t;
 }
 
 export const LFO_WAVEFORMS = ["saw", "invSaw", "triangle", "square", "random", "noise"] as const;
 export type LfoWaveform = (typeof LFO_WAVEFORMS)[number];
 
 export function lfoWaveformFromCc(value: number): LfoWaveform {
-  const idx = Math.min(5, Math.floor((value / 128) * 6));
+  const idx = ccToOptionIndex(value, LFO_WAVEFORMS.length);
   return LFO_WAVEFORMS[idx];
 }
 
 export function lfoRateHz(rateCc: number, syncOn: boolean): number {
   if (syncOn) return 0.5 + (rateCc / 127) * 8;
   return 0.05 + Math.pow(rateCc / 127, 2) * 20;
+}
+
+/** Cutoff CC after filter envelope. Not clamped so the env curve can sit above a wide-open filter. */
+export function filterCutoffWithEnv(cutoffCc: number, envCc: number, envLevel = 1): number {
+  return cutoffCc + (Math.max(0, Math.min(127, envCc)) / 127) * 127 * envLevel;
+}
+
+/** Log frequency 0–1 along the filter/spectrum x axis (Nyquist at the right). */
+export function filterFreqNormAtX(x: number, width: number): number {
+  const min = 0.015;
+  const max = 1;
+  const t = Math.max(0, Math.min(1, x / Math.max(1, width - 1)));
+  return min * Math.pow(max / min, t);
 }
 
 export function filterResponseDb(freqNorm: number, cutoffCc: number, resoCc: number): number {
@@ -105,18 +145,20 @@ export function filterResponseDb(freqNorm: number, cutoffCc: number, resoCc: num
   return Math.max(-48, Math.min(12, db));
 }
 
+/** Mix gains for the osc viz. A single oscillator grows 0–127 instead of jumping to 100% at 1. */
 export function oscMixLevels(values: {
   square: number;
   saw: number;
   sub: number;
   noise: number;
 }): { square: number; saw: number; sub: number; noise: number } {
-  const total = values.square + values.saw + values.sub + values.noise || 1;
+  const sum = values.square + values.saw + values.sub + values.noise;
+  const scale = Math.max(127, sum) || 1;
   return {
-    square: values.square / total,
-    saw: values.saw / total,
-    sub: values.sub / total,
-    noise: values.noise / total,
+    square: values.square / scale,
+    saw: values.saw / scale,
+    sub: values.sub / scale,
+    noise: values.noise / scale,
   };
 }
 

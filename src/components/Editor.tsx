@@ -183,9 +183,6 @@ export default function Editor() {
     });
   };
 
-  const lfoSyncOn = getVal("lfo-sync") >= 64;
-  const drawIdx = Math.min(2, Math.floor((getVal("draw-sw") / 128) * 3));
-
   return (
     <div className="editor">
       <header className="editor-header">
@@ -327,8 +324,8 @@ export default function Editor() {
 
       {connected && !transportInfo?.isMock && (
         <div className="alert alert-info">
-          CC visualizers in each section are estimates. The top oscilloscope and Filter spectrum show live USB
-          audio when capture is active.
+          CC visualizers in each section are estimates. The top oscilloscope shows live USB audio. The Filter
+          graph overlays the live USB spectrum on the estimated cutoff curve.
         </div>
       )}
 
@@ -381,8 +378,6 @@ export default function Editor() {
               <SectionVisualizer
                 section={section}
                 getVal={getVal}
-                lfoSyncOn={lfoSyncOn}
-                drawIdx={drawIdx}
                 audioAnalysers={audioAnalysers}
                 audioActive={audioActive}
               />

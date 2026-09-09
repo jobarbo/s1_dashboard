@@ -237,7 +237,9 @@ export function getParamsBySection(section: S1Section): S1ParameterDef[] {
   return S1_PARAMETERS.filter((p) => p.section === section);
 }
 
-/** Map CC value to dropdown index. Small values (0..n-1) map directly; knob positions use buckets. */
+/** Map CC value to dropdown index. Small values (0..n-1) map directly; knob positions use buckets.
+ * Visualizers that follow a dropdown (LFO waveform, Draw, Sync, Sub Oct) must use this, not raw 0–127 buckets. */
+
 export function ccToOptionIndex(value: number, optionCount: number): number {
   if (optionCount <= 1) return 0;
   const v = Math.max(0, Math.min(127, Math.round(value)));

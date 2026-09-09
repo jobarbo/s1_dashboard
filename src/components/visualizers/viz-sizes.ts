@@ -1,6 +1,7 @@
 export const VIZ_SIZE = {
   full: { width: 320, height: 72 },
   compact: { width: 260, height: 36 },
+  filterCompact: { width: 260, height: 72 },
 } as const;
 
 export function vizDimensions(compact?: boolean) {

@@ -72,10 +72,10 @@ export async function startUsbAudioCapture(deviceId?: string): Promise<UsbAudioS
   waveform.smoothingTimeConstant = 0;
 
   const spectrum = context.createAnalyser();
-  spectrum.fftSize = 1024;
-  spectrum.smoothingTimeConstant = 0;
-  spectrum.minDecibels = -90;
-  spectrum.maxDecibels = -24;
+  spectrum.fftSize = 2048;
+  spectrum.smoothingTimeConstant = 0.12;
+  spectrum.minDecibels = -78;
+  spectrum.maxDecibels = -12;
 
   const source = context.createMediaStreamSource(stream);
   source.connect(waveform);
