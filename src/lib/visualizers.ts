@@ -145,9 +145,37 @@ export function phaseDelta(from: number, to: number): number {
 
 export function lfoRateHz(rateCc: number, syncOn: boolean, fast = false, bpm = 120): number {
   if (syncOn) return bpm / 60 / lfoSyncBeats(rateCc);
+  // Heuristic — Roland only documents RATE as 0–255, no Hz table.
+  // Normal ≈ 0.05–20 Hz; Fast stretches into audio-rate territory.
   const n = Math.max(0, Math.min(127, rateCc)) / 127;
-  if (fast) return 0.4 + Math.pow(n, 1.45) * 380;
-  return 0.03 + Math.pow(n, 2.15) * 22;
+  if (fast) return 0.5 + Math.pow(n, 1.35) * 320;
+  return 0.05 + Math.pow(n, 2.05) * 19.95;
+}
+
+/** Human-readable estimate for UI captions. */
+export function formatLfoRateLabel(
+  rateCc: number,
+  syncOn: boolean,
+  fast = false,
+  bpm: number | null = null,
+): string {
+  if (syncOn) {
+    const beats = lfoSyncBeats(rateCc);
+    const note =
+      beats >= 4
+        ? `${beats / 4} bars`
+        : beats === 1
+          ? "1/4"
+          : beats === 0.5
+            ? "1/8"
+            : beats === 0.25
+              ? "1/16"
+              : `${beats.toFixed(2)} beats`;
+    const hz = lfoRateHz(rateCc, true, false, bpm ?? 120);
+    return bpm != null ? `${note} @ ${Math.round(bpm)} BPM (~${hz.toFixed(2)} Hz)` : `${note} (no clock)`;
+  }
+  const hz = lfoRateHz(rateCc, false, fast, 120);
+  return `${hz < 10 ? hz.toFixed(2) : hz.toFixed(1)} Hz${fast ? " fast" : ""}`;
 }
 
 export function spectrumBrightness(bins: Uint8Array): number {

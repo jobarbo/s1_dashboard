@@ -5,8 +5,8 @@ import {
   filterCutoffWithEnv,
   filterFreqNormAtX,
   filterResponseDb,
+  formatLfoRateLabel,
   lfoRateHz,
-  lfoSyncBeats,
   lfoWaveformFromCc,
   modEnvTimeSeconds,
   phaseDelta,
@@ -20,7 +20,7 @@ import {
   wrap01,
   WAVEFORM_DISPLAY_CYCLES,
 } from "../../lib/visualizers";
-import { midiClockBeats, midiClockBpm } from "../../lib/midi-clock";
+import { midiClockBpm } from "../../lib/midi-clock";
 import { useVizFillSize } from "./viz-sizes";
 
 interface OscVisualizerProps {
@@ -164,7 +164,8 @@ export function LfoVisualizer({
   const histRef = useRef<{ t: number; v: number }[]>([]);
   const lastNoteRef = useRef(noteOnGeneration);
   const noteGenRef = useRef(noteOnGeneration);
-  const clockTrimRef = useRef(0);
+  const rateLockRef = useRef(0);
+  const zcRef = useRef({ prev: 0, t: 0 });
   noteGenRef.current = noteOnGeneration;
   const { wrapRef, width, height } = useVizFillSize();
 
@@ -181,18 +182,27 @@ export function LfoVisualizer({
     const waveBuf =
       waveAnalyser && audioActive ? new Uint8Array(waveAnalyser.fftSize) : null;
 
+    // Reset measured rate when RATE / Sync / Mode change.
+    rateLockRef.current = 0;
+    zcRef.current = { prev: 0, t: 0 };
+
     const draw = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
       const clockBpm = midiClockBpm();
-      const rateHz = lfoRateHz(rateCc, syncOn, fastMode, clockBpm ?? 120);
+      const ccRate = lfoRateHz(rateCc, syncOn, fastMode, clockBpm ?? 120);
 
-      if (syncOn && clockBpm != null) {
-        phaseRef.current = wrap01(midiClockBeats() / lfoSyncBeats(rateCc) + clockTrimRef.current);
-      } else {
-        phaseRef.current += rateHz * dt;
+      // Sync Off: rate is strictly from the RATE CC (worked well).
+      // Sync On: start from note-length×tempo, then audio can correct (no MIDI clock / wrong BPM).
+      let rateHz = ccRate;
+      if (syncOn) {
+        if (rateLockRef.current <= 0) rateLockRef.current = ccRate;
+        rateLockRef.current += (ccRate - rateLockRef.current) * (clockBpm == null ? 0.03 : 0.12);
+        rateHz = rateLockRef.current;
       }
+
+      phaseRef.current += rateHz * dt;
 
       if (keyTrigger && noteGenRef.current !== lastNoteRef.current) {
         lastNoteRef.current = noteGenRef.current;
@@ -222,29 +232,41 @@ export function LfoVisualizer({
           waveAnalyser.getByteTimeDomainData(waveBuf);
           raw = raw * 0.82 + waveformRms(waveBuf) * 0.18;
         }
-        dcRef.current += (raw - dcRef.current) * 0.045;
+        dcRef.current += (raw - dcRef.current) * 0.12;
         const ac = raw - dcRef.current;
-        absRef.current += (Math.abs(ac) - absRef.current) * 0.08;
+        absRef.current += (Math.abs(ac) - absRef.current) * 0.14;
         const gain = Math.max(absRef.current, 0.004);
         const mod = Math.max(-1, Math.min(1, ac / (gain * 2.2)));
 
         if (absRef.current > 0.012 && peak > 8) {
+          // Period lock from audio only in Sync On (tempo may be unknown).
+          if (syncOn) {
+            const zc = zcRef.current;
+            if (zc.prev < 0 && mod >= 0) {
+              if (zc.t > 0 && now - zc.t > 30) {
+                const hz = 1000 / (now - zc.t);
+                const lo = clockBpm == null ? 0.08 : rateHz * 0.45;
+                const hi = clockBpm == null ? 60 : rateHz * 2.4;
+                if (hz > lo && hz < hi) {
+                  rateLockRef.current += (hz - rateLockRef.current) * (clockBpm == null ? 0.28 : 0.12);
+                }
+              }
+              zc.t = now;
+            }
+            zc.prev = mod;
+          }
+
           const hist = histRef.current;
           hist.push({ t: now, v: mod });
-          const keepAfter = now - 750;
+          const keepAfter = now - 600;
           while (hist.length > 0 && hist[0].t < keepAfter) hist.shift();
 
-          if (hist.length > 18) {
+          if (hist.length > 14) {
             const fit = bestLfoPhase(wf, rateHz, now, hist);
-            if (fit.score / hist.length > 0.12) {
+            if (fit.score / hist.length > 0.1) {
               const pull = phaseDelta(phaseRef.current, fit.phase);
-              // Phase only — never retune Hz from USB (notes, filter env, etc.).
-              const catchUp = Math.min(0.045, 1.15 * dt);
-              if (syncOn && clockBpm != null) {
-                clockTrimRef.current = wrap01(clockTrimRef.current + pull * catchUp);
-              } else {
-                phaseRef.current += pull * catchUp;
-              }
+              const catchUp = Math.min(0.28, 6 * dt);
+              phaseRef.current += pull * catchUp;
             }
           }
         }
@@ -256,8 +278,10 @@ export function LfoVisualizer({
       ctx.lineWidth = compact ? 1 : 1.5;
       ctx.beginPath();
 
+      // "Now" at the RIGHT (matches Envelope USB scroll); left = past cycles.
       for (let x = 0; x < w; x++) {
-        const phase = phaseRef.current + (x / w) * WAVEFORM_DISPLAY_CYCLES;
+        const age = ((w - 1 - x) / Math.max(1, w - 1)) * WAVEFORM_DISPLAY_CYCLES;
+        const phase = phaseRef.current - age;
         const yVal =
           wf === "noise" ? sampleWaveform("noise", phase) : sampleWaveform(wf, phase, pw);
         const py = h / 2 - yVal * (h * 0.38);
@@ -269,7 +293,7 @@ export function LfoVisualizer({
       const nowY = h / 2 - sampleWaveform(wf, phaseRef.current, pw) * (h * 0.38);
       ctx.fillStyle = "rgba(160, 255, 220, 0.95)";
       ctx.beginPath();
-      ctx.arc(2.5, nowY, compact ? 2.2 : 3, 0, Math.PI * 2);
+      ctx.arc(w - 2.5, nowY, compact ? 2.2 : 3, 0, Math.PI * 2);
       ctx.fill();
 
       rafRef.current = requestAnimationFrame(draw);
@@ -291,16 +315,18 @@ export function LfoVisualizer({
     height,
   ]);
 
+  const rateLabel = formatLfoRateLabel(rateCc, syncOn, fastMode, midiClockBpm());
+
   return (
     <div className={`viz-block${compact ? " viz-block--compact" : ""}`}>
       <div className="viz-caption">
         {compact
           ? audioActive
-            ? "LFO locked to USB"
-            : "LFO (CC / clock)"
+            ? `LFO ~${rateLabel}`
+            : `LFO ~${rateLabel}`
           : audioActive
-            ? "LFO phase-locked to live USB modulation"
-            : "LFO (rate from CC, clock if sync)"}
+            ? `LFO ~${rateLabel} (phase-locked)`
+            : `LFO ~${rateLabel} (estimated)`}
       </div>
       <div className="viz-canvas-wrap" ref={wrapRef}>
         <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
