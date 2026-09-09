@@ -414,6 +414,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
+  container-type: inline-size;
+  container-name: params;
 }
 
 .param-group {
@@ -437,9 +439,31 @@ body {
 }
 
 .param-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem 0.75rem;
+}
+
+@container params (min-width: 16.5rem) {
+  .param-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .param-settings .select-control,
+  .param-settings .toggle {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+
+  .param-settings .select-label,
+  .param-settings .toggle-label {
+    min-width: 0;
+  }
+
+  .param-settings .toggle-row {
+    justify-content: flex-start;
+  }
 }
 
 .param-knob-row {
@@ -458,10 +482,6 @@ body {
 
 .knob.unsynced .knob-dial {
   opacity: 0.55;
-}
-
-.knob.unsynced .knob-value {
-  color: var(--warn);
 }
 
 .knob-dial {
@@ -499,14 +519,6 @@ body {
   border-radius: 1px;
 }
 
-.knob-label {
-  font-size: 0.68rem;
-  color: var(--text-muted);
-  text-align: center;
-  max-width: 72px;
-  line-height: 1.2;
-}
-
 .knob-value {
   font-size: 0.72rem;
   font-variant-numeric: tabular-nums;
@@ -525,9 +537,30 @@ body {
 
 .toggle-label,
 .select-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
   flex: 0 1 auto;
   color: var(--text-muted);
   min-width: 4.5rem;
+}
+
+.knob-label {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.2rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 88px;
+  line-height: 1.2;
+}
+
+.unsynced-mark {
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 0.68rem;
 }
 
 .toggle-row {

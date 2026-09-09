@@ -22,7 +22,10 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
     const on = isToggleOn(value);
     return (
       <label className={`toggle ${synced ? "synced" : "unsynced"}`}>
-        <span className="toggle-label">{def.name}</span>
+        <span className="toggle-label">
+          {def.name}
+          {!synced && <span className="unsynced-mark">?</span>}
+        </span>
         <span className="toggle-row">
           <input
             type="checkbox"
@@ -30,7 +33,7 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
             disabled={disabled}
             onChange={(e) => onChange(def.id, getCcForToggle(e.target.checked))}
           />
-          <span className="toggle-value">{synced ? display : "?"}</span>
+          <span className="toggle-value">{display}</span>
         </span>
       </label>
     );
@@ -40,7 +43,10 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
     const idx = ccToOptionIndex(value, def.options.length);
     return (
       <label className={`select-control ${synced ? "synced" : "unsynced"}`}>
-        <span className="select-label">{def.name}</span>
+        <span className="select-label">
+          {def.name}
+          {!synced && <span className="unsynced-mark">?</span>}
+        </span>
         <select
           value={idx}
           disabled={disabled}
@@ -54,7 +60,6 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
             </option>
           ))}
         </select>
-        {!synced && <span className="select-value">?</span>}
       </label>
     );
   }
