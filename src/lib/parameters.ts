@@ -23,6 +23,8 @@ export interface S1ParameterDef {
   options?: readonly string[];
   /** Exclude from Send All bulk */
   excludeBulkSend?: boolean;
+  /** Named cluster inside a section (Mix, Chord, etc.) */
+  group?: string;
 }
 
 export const SECTION_LABELS: Record<S1Section, string> = {
@@ -119,15 +121,15 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 0,
     options: ["Mono", "Unison", "Poly", "Chord"],
   },
-  { id: "ch-v2", name: "Ch V2 On/Off", cc: 81, section: "voice", type: "toggle", initialValue: 0 },
-  { id: "ch-v3", name: "Ch V3 On/Off", cc: 82, section: "voice", type: "toggle", initialValue: 0 },
-  { id: "ch-v4", name: "Ch V4 On/Off", cc: 83, section: "voice", type: "toggle", initialValue: 0 },
-  { id: "v2-shift", name: "V2 Key Shift", cc: 85, section: "voice", type: "bipolar", initialValue: 64 },
-  { id: "v3-shift", name: "V3 Key Shift", cc: 86, section: "voice", type: "bipolar", initialValue: 64 },
-  { id: "v4-shift", name: "V4 Key Shift", cc: 87, section: "voice", type: "bipolar", initialValue: 64 },
+  { id: "ch-v2", name: "Ch V2 On/Off", cc: 81, section: "voice", type: "toggle", initialValue: 0, group: "Chord" },
+  { id: "ch-v3", name: "Ch V3 On/Off", cc: 82, section: "voice", type: "toggle", initialValue: 0, group: "Chord" },
+  { id: "ch-v4", name: "Ch V4 On/Off", cc: 83, section: "voice", type: "toggle", initialValue: 0, group: "Chord" },
+  { id: "v2-shift", name: "V2 Key Shift", cc: 85, section: "voice", type: "bipolar", initialValue: 64, group: "Chord" },
+  { id: "v3-shift", name: "V3 Key Shift", cc: 86, section: "voice", type: "bipolar", initialValue: 64, group: "Chord" },
+  { id: "v4-shift", name: "V4 Key Shift", cc: 87, section: "voice", type: "bipolar", initialValue: 64, group: "Chord" },
 
   // Oscillator
-  { id: "osc-lfo-pitch", name: "LFO Pitch", cc: 13, section: "oscillator", type: "continuous", initialValue: 0 },
+  { id: "osc-lfo-pitch", name: "LFO Pitch", cc: 13, section: "oscillator", type: "continuous", initialValue: 0, group: "Pitch / PWM" },
   {
     id: "osc-range",
     name: "Range",
@@ -137,7 +139,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 0,
     options: ["64'", "32'", "16'", "8'", "4'", "2'"],
   },
-  { id: "square-pw", name: "Square PW", cc: 15, section: "oscillator", type: "continuous", initialValue: 64 },
+  { id: "square-pw", name: "Square PW", cc: 15, section: "oscillator", type: "continuous", initialValue: 64, group: "Pitch / PWM" },
   {
     id: "pwm-source",
     name: "PWM Source",
@@ -147,10 +149,10 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 0,
     options: ["Envelope", "Manual", "LFO"],
   },
-  { id: "osc-bend", name: "Bend Amount", cc: 18, section: "oscillator", type: "continuous", initialValue: 0 },
-  { id: "square-level", name: "Square", cc: 19, section: "oscillator", type: "continuous", initialValue: 127 },
-  { id: "saw-level", name: "Saw", cc: 20, section: "oscillator", type: "continuous", initialValue: 0 },
-  { id: "sub-level", name: "Sub", cc: 21, section: "oscillator", type: "continuous", initialValue: 0 },
+  { id: "osc-bend", name: "Bend Amount", cc: 18, section: "oscillator", type: "continuous", initialValue: 0, group: "Pitch / PWM" },
+  { id: "square-level", name: "Square", cc: 19, section: "oscillator", type: "continuous", initialValue: 127, group: "Mix" },
+  { id: "saw-level", name: "Saw", cc: 20, section: "oscillator", type: "continuous", initialValue: 0, group: "Mix" },
+  { id: "sub-level", name: "Sub", cc: 21, section: "oscillator", type: "continuous", initialValue: 0, group: "Mix" },
   {
     id: "sub-oct",
     name: "Sub Oct Type",
@@ -160,8 +162,8 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 0,
     options: ["-2 Oct Asym", "-2 Oct", "-1 Oct"],
   },
-  { id: "noise-level", name: "Noise", cc: 23, section: "oscillator", type: "continuous", initialValue: 0 },
-  { id: "fine-tune", name: "Fine Tune", cc: 76, section: "oscillator", type: "bipolar", initialValue: 64 },
+  { id: "noise-level", name: "Noise", cc: 23, section: "oscillator", type: "continuous", initialValue: 0, group: "Mix" },
+  { id: "fine-tune", name: "Fine Tune", cc: 76, section: "oscillator", type: "bipolar", initialValue: 64, group: "Pitch / PWM" },
   {
     id: "noise-mode",
     name: "Noise Mode",
@@ -171,9 +173,9 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 0,
     options: ["Pink", "White"],
   },
-  { id: "draw-multiply", name: "Draw Multiply", cc: 102, section: "oscillator", type: "continuous", initialValue: 0 },
-  { id: "chop-overtone", name: "Chop Overtone", cc: 103, section: "oscillator", type: "continuous", initialValue: 0 },
-  { id: "chop-comb", name: "Chop Comb", cc: 104, section: "oscillator", type: "continuous", initialValue: 0 },
+  { id: "draw-multiply", name: "Draw Multiply", cc: 102, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
+  { id: "chop-overtone", name: "Chop Overtone", cc: 103, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
+  { id: "chop-comb", name: "Chop Comb", cc: 104, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
   {
     id: "draw-sw",
     name: "Draw",
@@ -185,12 +187,12 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   },
 
   // Filter
-  { id: "filter-env", name: "Env Amount", cc: 24, section: "filter", type: "continuous", initialValue: 0 },
-  { id: "filter-lfo", name: "LFO Amount", cc: 25, section: "filter", type: "continuous", initialValue: 0 },
-  { id: "filter-keytrack", name: "Keytracking", cc: 26, section: "filter", type: "continuous", initialValue: 0 },
-  { id: "filter-bend", name: "Bend Amount", cc: 27, section: "filter", type: "continuous", initialValue: 0 },
-  { id: "filter-reso", name: "Resonance", cc: 71, section: "filter", type: "continuous", initialValue: 0 },
-  { id: "filter-cutoff", name: "Cutoff", cc: 74, section: "filter", type: "continuous", initialValue: 127 },
+  { id: "filter-cutoff", name: "Cutoff", cc: 74, section: "filter", type: "continuous", initialValue: 127, group: "Tone" },
+  { id: "filter-reso", name: "Resonance", cc: 71, section: "filter", type: "continuous", initialValue: 0, group: "Tone" },
+  { id: "filter-env", name: "Env Amount", cc: 24, section: "filter", type: "continuous", initialValue: 0, group: "Mod" },
+  { id: "filter-lfo", name: "LFO Amount", cc: 25, section: "filter", type: "continuous", initialValue: 0, group: "Mod" },
+  { id: "filter-keytrack", name: "Keytracking", cc: 26, section: "filter", type: "continuous", initialValue: 0, group: "Mod" },
+  { id: "filter-bend", name: "Bend Amount", cc: 27, section: "filter", type: "continuous", initialValue: 0, group: "Mod" },
 
   // Envelope
   {
@@ -211,16 +213,16 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     initialValue: 1,
     options: ["LFO", "Gate", "Gate+Trig"],
   },
-  { id: "env-sustain", name: "Sustain", cc: 30, section: "envelope", type: "continuous", initialValue: 127 },
-  { id: "env-release", name: "Release", cc: 72, section: "envelope", type: "continuous", initialValue: 0 },
   { id: "env-attack", name: "Attack", cc: 73, section: "envelope", type: "continuous", initialValue: 0 },
   { id: "env-decay", name: "Decay", cc: 75, section: "envelope", type: "continuous", initialValue: 0 },
+  { id: "env-sustain", name: "Sustain", cc: 30, section: "envelope", type: "continuous", initialValue: 127 },
+  { id: "env-release", name: "Release", cc: 72, section: "envelope", type: "continuous", initialValue: 0 },
 
   // Effects
-  { id: "reverb-time", name: "Reverb Time", cc: 89, section: "effects", type: "continuous", initialValue: 64 },
-  { id: "delay-time", name: "Delay Time", cc: 90, section: "effects", type: "continuous", initialValue: 64 },
-  { id: "reverb-level", name: "Reverb Level", cc: 91, section: "effects", type: "continuous", initialValue: 0 },
-  { id: "delay-level", name: "Delay Level", cc: 92, section: "effects", type: "continuous", initialValue: 0 },
+  { id: "reverb-time", name: "Reverb Time", cc: 89, section: "effects", type: "continuous", initialValue: 64, group: "Reverb" },
+  { id: "reverb-level", name: "Reverb Level", cc: 91, section: "effects", type: "continuous", initialValue: 0, group: "Reverb" },
+  { id: "delay-time", name: "Delay Time", cc: 90, section: "effects", type: "continuous", initialValue: 64, group: "Delay" },
+  { id: "delay-level", name: "Delay Level", cc: 92, section: "effects", type: "continuous", initialValue: 0, group: "Delay" },
   {
     id: "chorus-type",
     name: "Chorus",

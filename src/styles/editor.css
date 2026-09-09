@@ -406,14 +406,47 @@ body {
   border-bottom: none;
 }
 
-.section-card-body .param-grid {
-  padding-top: 0.15rem;
+.section-card-body .param-panel {
+  padding-top: 0.1rem;
 }
 
-.param-grid {
+.param-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.param-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.param-panel > .param-group:not(:last-child) {
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.param-group-label {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.param-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.param-knob-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 0.5rem 0.35rem;
+  justify-items: center;
 }
 
 .knob {
@@ -483,10 +516,24 @@ body {
 .toggle,
 .select-control {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   font-size: 0.72rem;
-  grid-column: span 2;
+}
+
+.toggle-label,
+.select-label {
+  flex: 0 1 auto;
+  color: var(--text-muted);
+  min-width: 4.5rem;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .toggle.unsynced,
@@ -498,6 +545,7 @@ body {
 .select-value {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  font-size: 0.68rem;
 }
 
 .toggle.unsynced .toggle-value,
@@ -506,7 +554,9 @@ body {
 }
 
 .select-control select {
-  padding: 0.3rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.28rem 0.35rem;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 4px;

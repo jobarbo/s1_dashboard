@@ -22,14 +22,16 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
     const on = isToggleOn(value);
     return (
       <label className={`toggle ${synced ? "synced" : "unsynced"}`}>
-        <input
-          type="checkbox"
-          checked={on}
-          disabled={disabled}
-          onChange={(e) => onChange(def.id, getCcForToggle(e.target.checked))}
-        />
         <span className="toggle-label">{def.name}</span>
-        <span className="toggle-value">{synced ? display : "?"}</span>
+        <span className="toggle-row">
+          <input
+            type="checkbox"
+            checked={on}
+            disabled={disabled}
+            onChange={(e) => onChange(def.id, getCcForToggle(e.target.checked))}
+          />
+          <span className="toggle-value">{synced ? display : "?"}</span>
+        </span>
       </label>
     );
   }
@@ -52,7 +54,7 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
             </option>
           ))}
         </select>
-        <span className="select-value">{synced ? display : "?"}</span>
+        {!synced && <span className="select-value">?</span>}
       </label>
     );
   }
@@ -69,6 +71,84 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
   );
 }
 
+function isSetting(state: ParameterState): boolean {
+  return state.def.type === "dropdown" || state.def.type === "toggle";
+}
+
+const GROUP_ORDER = [
+  "Mix",
+  "Tone",
+  "Pitch / PWM",
+  "Mod",
+  "Draw / Chop",
+  "Reverb",
+  "Delay",
+  "Chord",
+];
+
+function layoutParams(params: ParameterState[]) {
+  const settings: ParameterState[] = [];
+  const knobs: ParameterState[] = [];
+  const grouped = new Map<string, ParameterState[]>();
+
+  for (const p of params) {
+    const g = p.def.group;
+    if (g) {
+      const list = grouped.get(g) ?? [];
+      list.push(p);
+      grouped.set(g, list);
+    } else if (isSetting(p)) {
+      settings.push(p);
+    } else {
+      knobs.push(p);
+    }
+  }
+
+  const groupOrder = [...grouped.keys()].sort((a, b) => {
+    const ia = GROUP_ORDER.indexOf(a);
+    const ib = GROUP_ORDER.indexOf(b);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+
+  return { settings, knobs, groupOrder, grouped };
+}
+
+function ParamCluster({
+  label,
+  items,
+  disabled,
+  onChange,
+}: {
+  label?: string;
+  items: ParameterState[];
+  disabled?: boolean;
+  onChange: (id: string, value: number) => void;
+}) {
+  const settings = items.filter(isSetting);
+  const knobs = items.filter((p) => !isSetting(p));
+  if (items.length === 0) return null;
+
+  return (
+    <div className="param-group">
+      {label ? <h3 className="param-group-label">{label}</h3> : null}
+      {settings.length > 0 && (
+        <div className="param-settings">
+          {settings.map((state) => (
+            <ParameterControl key={state.def.id} state={state} disabled={disabled} onChange={onChange} />
+          ))}
+        </div>
+      )}
+      {knobs.length > 0 && (
+        <div className="param-knob-row">
+          {knobs.map((state) => (
+            <ParameterControl key={state.def.id} state={state} disabled={disabled} onChange={onChange} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ParameterGrid({
   params,
   disabled,
@@ -78,12 +158,17 @@ export function ParameterGrid({
   disabled?: boolean;
   onChange: (id: string, value: number) => void;
 }) {
+  const { settings, knobs, groupOrder, grouped } = layoutParams(params);
+
   return (
-    <div className="param-grid">
-      {params.map((state) => (
-        <ParameterControl
-          key={state.def.id}
-          state={state}
+    <div className="param-panel">
+      <ParamCluster items={settings} disabled={disabled} onChange={onChange} />
+      <ParamCluster items={knobs} disabled={disabled} onChange={onChange} />
+      {groupOrder.map((name) => (
+        <ParamCluster
+          key={name}
+          label={name}
+          items={grouped.get(name) ?? []}
           disabled={disabled}
           onChange={onChange}
         />
