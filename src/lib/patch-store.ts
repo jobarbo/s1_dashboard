@@ -10,6 +10,7 @@ import {
   sendPanic,
   type MidiTransport,
 } from "./midi";
+import { ingestMidiRealtime } from "./midi-clock";
 
 export interface ParameterState {
   def: S1ParameterDef;
@@ -50,6 +51,7 @@ export class PatchStore {
   private suppressSend = false;
   private lastInbound: string | null = null;
   private lastOutbound: string | null = null;
+  private noteOnGeneration = 0;
 
   constructor() {
     const stored = loadStoredValues();
@@ -198,7 +200,13 @@ export class PatchStore {
     saveStoredValues(values);
   }
 
+  getNoteOnGeneration(): number {
+    return this.noteOnGeneration;
+  }
+
   handleIncoming(data: Uint8Array, transport: MidiTransport): void {
+    if (ingestMidiRealtime(data)) return;
+
     const msg = parseMidiMessage(data);
     if (!msg) return;
 
@@ -221,6 +229,7 @@ export class PatchStore {
     }
 
     if (msg.type === "noteOn" || msg.type === "noteOff") {
+      if (msg.type === "noteOn") this.noteOnGeneration += 1;
       this.lastInbound = `${msg.type === "noteOn" ? "Note on" : "Note off"} ${msg.note} ch ${msg.channel}`;
       this.notify();
     }
@@ -250,6 +259,7 @@ export class PatchStore {
   sendNote(note: number, on: boolean, velocity = 100): void {
     if (!this.transport) return;
     if (on) {
+      this.noteOnGeneration += 1;
       this.transport.sendNoteOn(this.channel, note, velocity);
       this.lastOutbound = `Sent note ${note} vel ${velocity} on ch ${this.channel}`;
     } else {

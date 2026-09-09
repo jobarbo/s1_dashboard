@@ -12,6 +12,7 @@ interface SectionVisualizerProps {
   getVal: (id: string, fallback?: number) => number;
   audioAnalysers: UsbAudioAnalysers | null;
   audioActive: boolean;
+  noteOnGeneration?: number;
 }
 
 export function SectionVisualizer({
@@ -19,6 +20,7 @@ export function SectionVisualizer({
   getVal,
   audioAnalysers,
   audioActive,
+  noteOnGeneration = 0,
 }: SectionVisualizerProps) {
   switch (section) {
     case "lfo":
@@ -29,6 +31,12 @@ export function SectionVisualizer({
             rateCc={getVal("lfo-rate")}
             waveformCc={getVal("lfo-waveform")}
             syncOn={ccToOptionIndex(getVal("lfo-sync"), 2) === 1}
+            fastMode={ccToOptionIndex(getVal("lfo-mode"), 2) === 1}
+            keyTrigger={ccToOptionIndex(getVal("lfo-key-trigger"), 2) === 1}
+            noteOnGeneration={noteOnGeneration}
+            analyser={audioAnalysers?.spectrum ?? null}
+            waveAnalyser={audioAnalysers?.waveform ?? null}
+            audioActive={audioActive}
           />
         </div>
       );
@@ -55,7 +63,10 @@ export function SectionVisualizer({
             cutoff={getVal("filter-cutoff")}
             resonance={getVal("filter-reso")}
             envAmount={getVal("filter-env")}
+            envAttack={getVal("env-attack")}
+            envDecay={getVal("env-decay")}
             envSustain={getVal("env-sustain")}
+            envRelease={getVal("env-release")}
             analyser={audioAnalysers?.spectrum ?? null}
             audioActive={audioActive}
           />
@@ -70,6 +81,8 @@ export function SectionVisualizer({
             decay={getVal("env-decay")}
             sustain={getVal("env-sustain")}
             release={getVal("env-release")}
+            analyser={audioAnalysers?.waveform ?? null}
+            audioActive={audioActive}
           />
         </div>
       );

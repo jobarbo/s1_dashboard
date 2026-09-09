@@ -25,6 +25,11 @@ export interface S1ParameterDef {
   excludeBulkSend?: boolean;
   /** Named cluster inside a section (Mix, Chord, etc.) */
   group?: string;
+  /**
+   * Value shown on the S-1 (TEMPO/VALUE is 0–255 for most knobs).
+   * MIDI CC is still 0–127. Omit for 0–127 (toggles/dropdowns).
+   */
+  displayMax?: number;
 }
 
 export const SECTION_LABELS: Record<S1Section, string> = {
@@ -261,6 +266,25 @@ export function optionIndexToCc(index: number, optionCount: number): number {
   return Math.min(127, Math.round(idx * bucketSize + bucketSize / 2));
 }
 
+export function paramDisplayMax(def: S1ParameterDef): number {
+  if (def.displayMax != null) return def.displayMax;
+  return def.type === "continuous" ? 255 : 127;
+}
+
+/** S-1 panel/VALUE readout (0–255) from a 7-bit CC. */
+export function ccToDisplayValue(cc: number, displayMax: number): number {
+  const v = Math.max(0, Math.min(127, Math.round(cc)));
+  if (displayMax <= 127) return v;
+  return Math.round((v * displayMax) / 127);
+}
+
+/** 7-bit CC from an S-1 display value. */
+export function displayValueToCc(display: number, displayMax: number): number {
+  const d = Math.max(0, Math.min(displayMax, Math.round(display)));
+  if (displayMax <= 127) return d;
+  return Math.round((d * 127) / displayMax);
+}
+
 export function formatParameterValue(def: S1ParameterDef, value: number): string {
   if (def.type === "bipolar") {
     const semitones = value - 64;
@@ -273,7 +297,7 @@ export function formatParameterValue(def: S1ParameterDef, value: number): string
     const idx = ccToOptionIndex(value, def.options.length);
     return def.options[idx] ?? String(value);
   }
-  return String(value);
+  return String(ccToDisplayValue(value, paramDisplayMax(def)));
 }
 
 export function getCcForToggle(on: boolean): number {

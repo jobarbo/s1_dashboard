@@ -4,6 +4,7 @@ import {
   getCcForToggle,
   isToggleOn,
   optionIndexToCc,
+  paramDisplayMax,
 } from "../lib/parameters";
 import type { ParameterState } from "../lib/patch-store";
 import { Knob } from "./Knob";
@@ -68,6 +69,7 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
     <Knob
       label={def.name}
       value={value}
+      displayMax={paramDisplayMax(def)}
       displayValue={display}
       synced={synced}
       disabled={disabled}

@@ -3,6 +3,7 @@ import { useCallback, useRef } from "react";
 interface KnobProps {
   label: string;
   value: number;
+  displayMax?: number;
   displayValue: string;
   synced: boolean;
   disabled?: boolean;
@@ -12,6 +13,7 @@ interface KnobProps {
 export function Knob({
   label,
   value,
+  displayMax = 127,
   displayValue,
   synced,
   disabled,
@@ -19,27 +21,35 @@ export function Knob({
 }: KnobProps) {
   const dragging = useRef(false);
   const startY = useRef(0);
-  const startValue = useRef(0);
+  const startDisplay = useRef(0);
+
+  const toDisplay = (cc: number) =>
+    displayMax <= 127 ? cc : Math.round((cc * displayMax) / 127);
+  const toCc = (display: number) =>
+    displayMax <= 127 ? display : Math.round((display * 127) / displayMax);
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (disabled) return;
       dragging.current = true;
       startY.current = e.clientY;
-      startValue.current = value;
+      startDisplay.current = toDisplay(value);
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [disabled, value],
+    [disabled, displayMax, value],
   );
 
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dragging.current || disabled) return;
       const delta = startY.current - e.clientY;
-      const next = Math.max(0, Math.min(127, startValue.current + Math.round(delta / 1.5)));
-      onChange(next);
+      const nextDisplay = Math.max(
+        0,
+        Math.min(displayMax, startDisplay.current + Math.round(delta / 1.2)),
+      );
+      onChange(toCc(nextDisplay));
     },
-    [disabled, onChange],
+    [disabled, displayMax, onChange],
   );
 
   const onPointerUp = useCallback(() => {
@@ -47,6 +57,7 @@ export function Knob({
   }, []);
 
   const angle = -135 + (value / 127) * 270;
+  const shown = toDisplay(value);
 
   return (
     <div className={`knob ${synced ? "synced" : "unsynced"} ${disabled ? "disabled" : ""}`}>
@@ -59,13 +70,17 @@ export function Knob({
         role="slider"
         aria-label={label}
         aria-valuemin={0}
-        aria-valuemax={127}
-        aria-valuenow={value}
+        aria-valuemax={displayMax}
+        aria-valuenow={shown}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={(e) => {
           if (disabled) return;
-          if (e.key === "ArrowUp" || e.key === "ArrowRight") onChange(Math.min(127, value + 1));
-          if (e.key === "ArrowDown" || e.key === "ArrowLeft") onChange(Math.max(0, value - 1));
+          if (e.key === "ArrowUp" || e.key === "ArrowRight") {
+            onChange(toCc(Math.min(displayMax, shown + 1)));
+          }
+          if (e.key === "ArrowDown" || e.key === "ArrowLeft") {
+            onChange(toCc(Math.max(0, shown - 1)));
+          }
         }}
       >
         <div className="knob-ring" />

@@ -353,6 +353,7 @@ export default function Editor() {
                 getVal={getVal}
                 audioAnalysers={audioAnalysers}
                 audioActive={audioActive}
+                noteOnGeneration={store.getNoteOnGeneration()}
               />
             </SectionCard>
           ))}

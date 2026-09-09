@@ -50,11 +50,17 @@ export function adsrSegmentWidths(
   decayCc: number,
   releaseCc: number,
 ): { attack: number; decay: number; sustain: number; release: number } {
-  const attack = attackCc > 0 ? width * (0.05 + (attackCc / 127) * 0.18) : 0;
-  const decay = decayCc > 0 ? width * (0.05 + (decayCc / 127) * 0.22) : 0;
-  const sustain = width * 0.28;
-  const release = releaseCc > 0 ? width * (0.05 + (releaseCc / 127) * 0.22) : 0;
-  return { attack, decay, sustain, release };
+  const attack = attackCc <= 0 ? 0 : modEnvTimeSeconds(attackCc, ADSR_MAX.attack);
+  const decay = decayCc <= 0 ? 0 : modEnvTimeSeconds(decayCc, ADSR_MAX.decay);
+  const release = releaseCc <= 0 ? 0 : modEnvTimeSeconds(releaseCc, ADSR_MAX.release);
+  const sustain = 0.55;
+  const scale = width / (attack + decay + sustain + release || 1);
+  return {
+    attack: attack * scale,
+    decay: decay * scale,
+    sustain: sustain * scale,
+    release: release * scale,
+  };
 }
 
 export function adsrHasRise(attackCc: number, decayCc: number, sustainCc: number): boolean {
@@ -115,9 +121,87 @@ export function lfoWaveformFromCc(value: number): LfoWaveform {
   return LFO_WAVEFORMS[idx];
 }
 
-export function lfoRateHz(rateCc: number, syncOn: boolean): number {
-  if (syncOn) return 0.5 + (rateCc / 127) * 8;
-  return 0.05 + Math.pow(rateCc / 127, 2) * 20;
+/** Note lengths for LFO Sync ON, in quarter-note beats (Roland S-1 RATE table). */
+export const LFO_SYNC_BEATS = [
+  32, 24, 64 / 3, 16, 12, 32 / 3, 8, 6, 16 / 3, 4, 3, 8 / 3, 2, 1.5, 4 / 3, 1, 0.75, 2 / 3, 0.5,
+  0.375, 1 / 3, 0.25, 0.1875, 1 / 6, 0.125, 0.09375, 1 / 12, 0.0625, 0.046875, 1 / 24, 0.03125,
+] as const;
+
+export function lfoSyncBeats(rateCc: number): number {
+  const idx = ccToOptionIndex(rateCc, LFO_SYNC_BEATS.length);
+  return LFO_SYNC_BEATS[idx];
+}
+
+export function wrap01(phase: number): number {
+  return phase - Math.floor(phase);
+}
+
+export function phaseDelta(from: number, to: number): number {
+  let d = wrap01(to) - wrap01(from);
+  if (d > 0.5) d -= 1;
+  if (d < -0.5) d += 1;
+  return d;
+}
+
+export function lfoRateHz(rateCc: number, syncOn: boolean, fast = false, bpm = 120): number {
+  if (syncOn) return bpm / 60 / lfoSyncBeats(rateCc);
+  const n = Math.max(0, Math.min(127, rateCc)) / 127;
+  if (fast) return 0.4 + Math.pow(n, 1.45) * 380;
+  return 0.03 + Math.pow(n, 2.15) * 22;
+}
+
+export function spectrumBrightness(bins: Uint8Array): number {
+  let lo = 0;
+  let hi = 0;
+  const mid = Math.max(4, Math.floor(bins.length * 0.1));
+  for (let i = 1; i < mid; i++) lo += bins[i];
+  for (let i = mid; i < bins.length; i++) hi += bins[i];
+  const t = lo + hi;
+  return t > 8 ? hi / t : 0;
+}
+
+export function spectrumCentroidNorm(bins: Uint8Array): number {
+  let num = 0;
+  let den = 0;
+  for (let i = 1; i < bins.length; i++) {
+    const v = bins[i];
+    num += i * v;
+    den += v;
+  }
+  return den > 8 ? num / den / bins.length : 0;
+}
+
+export function waveformRms(samples: Uint8Array): number {
+  let s = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const v = (samples[i] - 128) / 128;
+    s += v * v;
+  }
+  return Math.sqrt(s / Math.max(1, samples.length));
+}
+
+export function bestLfoPhase(
+  type: LfoWaveform,
+  rateHz: number,
+  nowMs: number,
+  history: { t: number; v: number }[],
+  steps = 36,
+): { phase: number; score: number } {
+  let bestPhase = 0;
+  let best = Number.NEGATIVE_INFINITY;
+  for (let i = 0; i < steps; i++) {
+    const cand = i / steps;
+    let score = 0;
+    for (const h of history) {
+      const age = (nowMs - h.t) / 1000;
+      score += h.v * sampleWaveform(type, cand - rateHz * age);
+    }
+    if (score > best) {
+      best = score;
+      bestPhase = cand;
+    }
+  }
+  return { phase: bestPhase, score: best };
 }
 
 /** Cutoff CC after filter envelope. Not clamped so the env curve can sit above a wide-open filter. */
@@ -125,24 +209,39 @@ export function filterCutoffWithEnv(cutoffCc: number, envCc: number, envLevel = 
   return cutoffCc + (Math.max(0, Math.min(127, envCc)) / 127) * 127 * envLevel;
 }
 
+/**
+ * Lowest freq on the log axis, as a fraction of Nyquist (~20 Hz at 44.1 kHz).
+ * Must stay in sync with cutoffCcToFreqNorm so the filter curve sits on the USB spectrum.
+ */
+export const FREQ_AXIS_MIN_NORM = 20 / 22050;
+
+/**
+ * Map cutoff CC onto the same log frequency axis as the spectrum.
+ * Values above 127 (cutoff + ENV) are allowed past Nyquist so the ENV
+ * curve keeps opening after the resonance peak leaves the right edge,
+ * instead of freezing at the canvas limit mid-Env Amount.
+ */
+export function cutoffCcToFreqNorm(cutoffCc: number, minNorm = FREQ_AXIS_MIN_NORM): number {
+  const t = Math.max(0, cutoffCc / 127);
+  return minNorm * Math.pow(1 / minNorm, t);
+}
+
 /** Log frequency 0–1 along the filter/spectrum x axis (Nyquist at the right). */
-export function filterFreqNormAtX(x: number, width: number): number {
-  const min = 0.015;
-  const max = 1;
+export function filterFreqNormAtX(x: number, width: number, minNorm = FREQ_AXIS_MIN_NORM): number {
   const t = Math.max(0, Math.min(1, x / Math.max(1, width - 1)));
-  return min * Math.pow(max / min, t);
+  return minNorm * Math.pow(1 / minNorm, t);
 }
 
 export function filterResponseDb(freqNorm: number, cutoffCc: number, resoCc: number): number {
-  const cutoff = 0.02 + (cutoffCc / 127) * 0.98;
-  const reso = resoCc / 127;
-  const x = Math.max(0.001, freqNorm);
-  const distance = Math.log2(x / cutoff);
-  let db = -24 * Math.max(0, distance);
-  const peakWidth = 0.08 + (1 - reso) * 0.12;
-  const peak = Math.exp(-Math.pow(distance / peakWidth, 2)) * reso * 18;
-  db += peak;
-  return Math.max(-48, Math.min(12, db));
+  const cutoff = Math.max(FREQ_AXIS_MIN_NORM, cutoffCcToFreqNorm(cutoffCc));
+  const reso = Math.pow(Math.max(0, Math.min(1, resoCc / 127)), 1.12);
+  const x = Math.max(FREQ_AXIS_MIN_NORM, freqNorm);
+  const oct = Math.log2(x / cutoff);
+  const lowpass = -24 * Math.max(0, oct);
+  const widthOct = 0.28 * Math.pow(1 - reso * 0.88, 1.55) + 0.028;
+  const peakDb = reso * 28;
+  const peak = peakDb * Math.exp(-(oct * oct) / (2 * widthOct * widthOct));
+  return Math.max(-48, Math.min(22, lowpass + peak));
 }
 
 /** Mix gains for the osc viz. A single oscillator grows 0–127 instead of jumping to 100% at 1. */
