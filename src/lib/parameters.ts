@@ -45,6 +45,8 @@ export const SECTION_ORDER: S1Section[] = [
   "controls",
 ];
 
+export const VIZ_SECTIONS: S1Section[] = ["lfo", "oscillator", "filter", "envelope"];
+
 /** CC numbers excluded from Send All (sustain pedal). */
 export const NO_BULK_SEND = new Set([64]);
 

@@ -3,6 +3,7 @@ import {
   getParamsBySection,
   SECTION_LABELS,
   SECTION_ORDER,
+  VIZ_SECTIONS,
 } from "../lib/parameters";
 import {
   isWebMidiSupported,
@@ -336,12 +337,52 @@ export default function Editor() {
         </div>
       )}
 
-      <SectionCard title="Oscilloscope" className="scope-panel">
-        <UsbAudioWaveform
-          analyser={audioAnalysers?.waveform ?? null}
-          active={audioActive}
-        />
-      </SectionCard>
+      <div className="dash-top">
+        <SectionCard title="Oscilloscope" className="scope-panel">
+          <UsbAudioWaveform
+            analyser={audioAnalysers?.waveform ?? null}
+            active={audioActive}
+          />
+        </SectionCard>
+
+        <div className="dash-vizs">
+          {VIZ_SECTIONS.map((section) => (
+            <SectionCard key={section} title={SECTION_LABELS[section]} className="viz-only-card">
+              <SectionVisualizer
+                section={section}
+                getVal={getVal}
+                audioAnalysers={audioAnalysers}
+                audioActive={audioActive}
+              />
+            </SectionCard>
+          ))}
+        </div>
+      </div>
+
+      <div className="sections-grid">
+        {SECTION_ORDER.map((section) => {
+          const defs = getParamsBySection(section);
+          const sectionStates = defs
+            .map((d) => store.getState(d.id))
+            .filter((s): s is NonNullable<typeof s> => s != null);
+          return (
+            <SectionCard key={section} title={SECTION_LABELS[section]}>
+              <ParameterGrid
+                params={sectionStates}
+                disabled={!connected}
+                onChange={handleParamChange}
+              />
+            </SectionCard>
+          );
+        })}
+      </div>
+
+      <footer className="editor-footer">
+        <p>
+          Not affiliated with Roland. Save patterns on the hardware (Shift + Write). CC-only — no
+          SysEx, no .PRM writing in v1.
+        </p>
+      </footer>
 
       <SectionCard title="Keyboard" className="keyboard-panel keyboard-row">
         <p className="keyboard-hint">Audition notes on MIDI channel {channel}</p>
@@ -366,37 +407,6 @@ export default function Editor() {
           ))}
         </div>
       </SectionCard>
-
-      <div className="sections-grid">
-        {SECTION_ORDER.map((section) => {
-          const defs = getParamsBySection(section);
-          const sectionStates = defs
-            .map((d) => store.getState(d.id))
-            .filter((s): s is NonNullable<typeof s> => s != null);
-          return (
-            <SectionCard key={section} title={SECTION_LABELS[section]}>
-              <SectionVisualizer
-                section={section}
-                getVal={getVal}
-                audioAnalysers={audioAnalysers}
-                audioActive={audioActive}
-              />
-              <ParameterGrid
-                params={sectionStates}
-                disabled={!connected}
-                onChange={handleParamChange}
-              />
-            </SectionCard>
-          );
-        })}
-      </div>
-
-      <footer className="editor-footer">
-        <p>
-          Not affiliated with Roland. Save patterns on the hardware (Shift + Write). CC-only — no
-          SysEx, no .PRM writing in v1.
-        </p>
-      </footer>
     </div>
   );
 }

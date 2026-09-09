@@ -13,7 +13,7 @@ import {
   sampleWaveform,
   WAVEFORM_DISPLAY_CYCLES,
 } from "../../lib/visualizers";
-import { vizDimensions, VIZ_SIZE } from "./viz-sizes";
+import { useVizFillSize } from "./viz-sizes";
 
 interface OscVisualizerProps {
   square: number;
@@ -39,7 +39,7 @@ export function OscVisualizer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef(0);
   const noisePhaseRef = useRef(0);
-  const { width, height } = vizDimensions(compact);
+  const { wrapRef, width, height } = useVizFillSize();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -115,7 +115,9 @@ export function OscVisualizer({
               : "Draw oscillator (slope, schematic)"
             : "Oscillator mix (estimated)"}
       </div>
-      <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      <div className="viz-canvas-wrap" ref={wrapRef}>
+        <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      </div>
     </div>
   );
 }
@@ -131,7 +133,7 @@ export function LfoVisualizer({ rateCc, waveformCc, syncOn, compact }: LfoVisual
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const phaseRef = useRef(0);
   const rafRef = useRef(0);
-  const { width, height } = vizDimensions(compact);
+  const { wrapRef, width, height } = useVizFillSize();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -174,7 +176,9 @@ export function LfoVisualizer({ rateCc, waveformCc, syncOn, compact }: LfoVisual
   return (
     <div className={`viz-block${compact ? " viz-block--compact" : ""}`}>
       <div className="viz-caption">{compact ? "LFO (CC est.)" : "LFO shape (animated estimate)"}</div>
-      <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      <div className="viz-canvas-wrap" ref={wrapRef}>
+        <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      </div>
     </div>
   );
 }
@@ -270,7 +274,7 @@ export function FilterVisualizer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rafRef = useRef(0);
   const specGainRef = useRef(1);
-  const { width, height } = compact ? VIZ_SIZE.filterCompact : vizDimensions(false);
+  const { wrapRef, width, height } = useVizFillSize();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -360,7 +364,9 @@ export function FilterVisualizer({
               ? "Filter response (env amount)"
               : "Filter response (estimated)"}
       </div>
-      <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      <div className="viz-canvas-wrap" ref={wrapRef}>
+        <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      </div>
     </div>
   );
 }
@@ -375,7 +381,7 @@ interface AdsrVisualizerProps {
 
 export function AdsrVisualizer({ attack, decay, sustain, release, compact }: AdsrVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { width, height } = vizDimensions(compact);
+  const { wrapRef, width, height } = useVizFillSize();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -387,8 +393,9 @@ export function AdsrVisualizer({ attack, decay, sustain, release, compact }: Ads
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
 
-    const baseY = h - 4;
-    const peakY = 4;
+    const pad = Math.max(3, Math.round(h * 0.08));
+    const baseY = h - pad;
+    const peakY = pad;
     const sustainY = baseY - (sustain / 127) * (baseY - peakY);
     const { attack: attackW, decay: decayW, sustain: sustainW, release: releaseW } =
       adsrSegmentWidths(w, attack, decay, release);
@@ -417,7 +424,9 @@ export function AdsrVisualizer({ attack, decay, sustain, release, compact }: Ads
   return (
     <div className={`viz-block${compact ? " viz-block--compact" : ""}`}>
       <div className="viz-caption">{compact ? "ADSR (CC est.)" : "ADSR envelope (approximate timing)"}</div>
-      <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      <div className="viz-canvas-wrap" ref={wrapRef}>
+        <canvas ref={canvasRef} width={width} height={height} className="viz-canvas" />
+      </div>
     </div>
   );
 }
