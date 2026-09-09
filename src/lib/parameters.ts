@@ -223,18 +223,19 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   { id: "env-sustain", name: "Sustain", cc: 30, section: "envelope", type: "continuous", initialValue: 127 },
   { id: "env-release", name: "Release", cc: 72, section: "envelope", type: "continuous", initialValue: 0 },
 
-  // Effects
-  { id: "reverb-time", name: "Reverb Time", cc: 89, section: "effects", type: "continuous", initialValue: 64, group: "Reverb" },
-  { id: "reverb-level", name: "Reverb Level", cc: 91, section: "effects", type: "continuous", initialValue: 0, group: "Reverb" },
-  { id: "delay-time", name: "Delay Time", cc: 90, section: "effects", type: "continuous", initialValue: 64, group: "Delay" },
-  { id: "delay-level", name: "Delay Level", cc: 92, section: "effects", type: "continuous", initialValue: 0, group: "Delay" },
+  // Effects (MIDI CCs only — deeper menus: see Reference modal)
+  { id: "reverb-time", name: "Time", cc: 89, section: "effects", type: "continuous", initialValue: 64, group: "Reverb" },
+  { id: "reverb-level", name: "Level", cc: 91, section: "effects", type: "continuous", initialValue: 0, group: "Reverb" },
+  { id: "delay-time", name: "Time", cc: 90, section: "effects", type: "continuous", initialValue: 64, group: "Delay" },
+  { id: "delay-level", name: "Level", cc: 92, section: "effects", type: "continuous", initialValue: 0, group: "Delay" },
   {
     id: "chorus-type",
-    name: "Chorus",
+    name: "Type",
     cc: 93,
     section: "effects",
     type: "dropdown",
     initialValue: 0,
+    group: "Chorus",
     options: ["Off", "Type 1", "Type 2", "Type 3", "Type 4"],
   },
 ];
@@ -257,13 +258,12 @@ export function ccToOptionIndex(value: number, optionCount: number): number {
   return Math.min(optionCount - 1, Math.max(0, idx));
 }
 
-/** Map dropdown index to CC value for outgoing messages. */
+/** Map dropdown index to CC value for outgoing messages.
+ * S-1 discrete menus use 0..n-1 (e.g. chorus Off/1/2/3/4). Do not send 0–127 bucket
+ * centers — values above n-1 are ignored or clamped, so only the first change appears to work. */
 export function optionIndexToCc(index: number, optionCount: number): number {
   if (optionCount <= 1) return 0;
-  const idx = Math.min(optionCount - 1, Math.max(0, index));
-  if (optionCount <= 4) return idx;
-  const bucketSize = 128 / optionCount;
-  return Math.min(127, Math.round(idx * bucketSize + bucketSize / 2));
+  return Math.min(optionCount - 1, Math.max(0, index));
 }
 
 export function paramDisplayMax(def: S1ParameterDef): number {

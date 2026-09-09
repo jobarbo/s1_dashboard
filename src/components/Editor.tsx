@@ -23,20 +23,10 @@ import {
   type UsbAudioSession,
 } from "../lib/usb-audio";
 import { ParameterGrid } from "./ParameterControl";
+import { ReferenceModal } from "./ReferenceModal";
 import { SectionCard } from "./SectionCard";
 import { SectionVisualizer } from "./SectionVisualizer";
 import { UsbAudioWaveform } from "./visualizers/UsbAudioVisualizers";
-
-const KEYBOARD_NOTES = [
-  { label: "C", note: 60 },
-  { label: "D", note: 62 },
-  { label: "E", note: 64 },
-  { label: "F", note: 65 },
-  { label: "G", note: 67 },
-  { label: "A", note: 69 },
-  { label: "B", note: 71 },
-  { label: "C+", note: 72 },
-];
 
 let storeSingleton: PatchStore | null = null;
 
@@ -52,7 +42,6 @@ export default function Editor() {
   const [error, setError] = useState<string | null>(null);
   const [audioError, setAudioError] = useState<string | null>(null);
   const [useMock, setUseMock] = useState(false);
-  const [activeNotes, setActiveNotes] = useState<Set<number>>(new Set());
   const [midiInputs, setMidiInputs] = useState<MidiPortInfo[]>([]);
   const [midiOutputs, setMidiOutputs] = useState<MidiPortInfo[]>([]);
   const [selectedInputId, setSelectedInputId] = useState("");
@@ -61,6 +50,7 @@ export default function Editor() {
   const [selectedAudioId, setSelectedAudioId] = useState("");
   const [audioActive, setAudioActive] = useState(false);
   const [audioAnalysers, setAudioAnalysers] = useState<UsbAudioAnalysers | null>(null);
+  const [referenceOpen, setReferenceOpen] = useState(false);
   const audioSessionRef = useRef<UsbAudioSession | null>(null);
 
   useEffect(() => {
@@ -166,22 +156,10 @@ export default function Editor() {
   const handleDisconnect = () => {
     store.disconnect();
     stopAudio();
-    setActiveNotes(new Set());
   };
 
   const handleParamChange = (id: string, value: number) => {
     store.setValue(id, value);
-  };
-
-  const handleNote = (note: number, down: boolean) => {
-    if (!connected) return;
-    store.sendNote(note, down);
-    setActiveNotes((prev) => {
-      const next = new Set(prev);
-      if (down) next.add(note);
-      else next.delete(note);
-      return next;
-    });
   };
 
   return (
@@ -193,6 +171,24 @@ export default function Editor() {
         </div>
 
         <div className="header-actions">
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon"
+            title="S-1 reference (menu-only options)"
+            aria-label="Open S-1 reference"
+            onClick={() => setReferenceOpen(true)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
+              <path
+                d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.4 4.4l2.1 2.1M17.5 17.5l2.1 2.1M4.4 19.6l2.1-2.1M17.5 6.5l2.1-2.1"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+
           {!isWebMidiSupported() && (
             <span className="badge badge-warn">Web MIDI unavailable — using mock</span>
           )}
@@ -385,29 +381,7 @@ export default function Editor() {
         </p>
       </footer>
 
-      <SectionCard title="Keyboard" className="keyboard-panel keyboard-row">
-        <p className="keyboard-hint">Audition notes on MIDI channel {channel}</p>
-        <div className="keyboard">
-          {KEYBOARD_NOTES.map(({ label, note }) => (
-            <button
-              key={note}
-              type="button"
-              className={`key ${activeNotes.has(note) ? "active" : ""}`}
-              disabled={!connected}
-              onMouseDown={() => handleNote(note, true)}
-              onMouseUp={() => handleNote(note, false)}
-              onMouseLeave={() => activeNotes.has(note) && handleNote(note, false)}
-              onTouchStart={(e) => {
-                e.preventDefault();
-                handleNote(note, true);
-              }}
-              onTouchEnd={() => handleNote(note, false)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </SectionCard>
+      <ReferenceModal open={referenceOpen} onClose={() => setReferenceOpen(false)} />
     </div>
   );
 }

@@ -90,6 +90,7 @@ const GROUP_ORDER = [
   "Draw / Chop",
   "Reverb",
   "Delay",
+  "Chorus",
   "Chord",
 ];
 

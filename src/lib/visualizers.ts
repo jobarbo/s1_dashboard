@@ -121,15 +121,85 @@ export function lfoWaveformFromCc(value: number): LfoWaveform {
   return LFO_WAVEFORMS[idx];
 }
 
-/** Note lengths for LFO Sync ON, in quarter-note beats (Roland S-1 RATE table). */
-export const LFO_SYNC_BEATS = [
-  32, 24, 64 / 3, 16, 12, 32 / 3, 8, 6, 16 / 3, 4, 3, 8 / 3, 2, 1.5, 4 / 3, 1, 0.75, 2 / 3, 0.5,
-  0.375, 1 / 3, 0.25, 0.1875, 1 / 6, 0.125, 0.09375, 1 / 12, 0.0625, 0.046875, 1 / 24, 0.03125,
+/** Note lengths for LFO Sync ON (Roland S-1 RATE table), in quarter-note beats. */
+export const LFO_SYNC_LABELS = [
+  "8_1",
+  "6_1",
+  "8_1t",
+  "4_1",
+  "3_1",
+  "4_1t",
+  "2_1",
+  "1d",
+  "2_1t",
+  "1_1",
+  "2d",
+  "1t",
+  "1_2",
+  "4d",
+  "2t",
+  "1_4",
+  "8d",
+  "4t",
+  "1_8",
+  "16d",
+  "8t",
+  "1_16",
+  "32d",
+  "16t",
+  "1_32",
+  "64d",
+  "32t",
+  "1_64",
+  "128d",
+  "64t",
+  "128",
 ] as const;
 
+export const LFO_SYNC_BEATS = [
+  32, // 8_1
+  24, // 6_1
+  64 / 3, // 8_1t
+  16, // 4_1
+  12, // 3_1
+  32 / 3, // 4_1t
+  8, // 2_1
+  6, // 1d
+  16 / 3, // 2_1t
+  4, // 1_1
+  3, // 2d
+  8 / 3, // 1t
+  2, // 1_2
+  1.5, // 4d
+  4 / 3, // 2t
+  1, // 1_4
+  0.75, // 8d
+  2 / 3, // 4t
+  0.5, // 1_8
+  0.375, // 16d
+  1 / 3, // 8t
+  0.25, // 1_16
+  0.1875, // 32d
+  1 / 6, // 16t
+  0.125, // 1_32
+  0.09375, // 64d
+  1 / 12, // 32t
+  0.0625, // 1_64
+  0.046875, // 128d
+  1 / 24, // 64t
+  0.03125, // 128
+] as const;
+
+export function lfoSyncIndex(rateCc: number): number {
+  return ccToOptionIndex(rateCc, LFO_SYNC_BEATS.length);
+}
+
 export function lfoSyncBeats(rateCc: number): number {
-  const idx = ccToOptionIndex(rateCc, LFO_SYNC_BEATS.length);
-  return LFO_SYNC_BEATS[idx];
+  return LFO_SYNC_BEATS[lfoSyncIndex(rateCc)];
+}
+
+export function lfoSyncLabel(rateCc: number): string {
+  return LFO_SYNC_LABELS[lfoSyncIndex(rateCc)];
 }
 
 export function wrap01(phase: number): number {
@@ -145,11 +215,10 @@ export function phaseDelta(from: number, to: number): number {
 
 export function lfoRateHz(rateCc: number, syncOn: boolean, fast = false, bpm = 120): number {
   if (syncOn) return bpm / 60 / lfoSyncBeats(rateCc);
-  // Heuristic — Roland only documents RATE as 0–255, no Hz table.
-  // Normal ≈ 0.05–20 Hz; Fast stretches into audio-rate territory.
+  // Sync Off: manual only says 0–255, no Hz — heuristic (biased slow to match hardware feel).
   const n = Math.max(0, Math.min(127, rateCc)) / 127;
-  if (fast) return 0.5 + Math.pow(n, 1.35) * 320;
-  return 0.05 + Math.pow(n, 2.05) * 19.95;
+  if (fast) return 0.25 + Math.pow(n, 1.4) * 180;
+  return 0.04 + Math.pow(n, 2.1) * 12;
 }
 
 /** Human-readable estimate for UI captions. */
@@ -160,19 +229,11 @@ export function formatLfoRateLabel(
   bpm: number | null = null,
 ): string {
   if (syncOn) {
-    const beats = lfoSyncBeats(rateCc);
-    const note =
-      beats >= 4
-        ? `${beats / 4} bars`
-        : beats === 1
-          ? "1/4"
-          : beats === 0.5
-            ? "1/8"
-            : beats === 0.25
-              ? "1/16"
-              : `${beats.toFixed(2)} beats`;
+    const label = lfoSyncLabel(rateCc);
     const hz = lfoRateHz(rateCc, true, false, bpm ?? 120);
-    return bpm != null ? `${note} @ ${Math.round(bpm)} BPM (~${hz.toFixed(2)} Hz)` : `${note} (no clock)`;
+    return bpm != null
+      ? `${label} @ ${Math.round(bpm)} BPM (~${hz.toFixed(2)} Hz)`
+      : `${label} (no clock · ~${hz.toFixed(2)} Hz @120)`;
   }
   const hz = lfoRateHz(rateCc, false, fast, 120);
   return `${hz < 10 ? hz.toFixed(2) : hz.toFixed(1)} Hz${fast ? " fast" : ""}`;

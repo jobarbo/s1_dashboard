@@ -67,6 +67,11 @@ export function SectionVisualizer({
             envDecay={getVal("env-decay")}
             envSustain={getVal("env-sustain")}
             envRelease={getVal("env-release")}
+            lfoAmount={getVal("filter-lfo")}
+            lfoRateCc={getVal("lfo-rate")}
+            lfoWaveformCc={getVal("lfo-waveform")}
+            lfoSyncOn={ccToOptionIndex(getVal("lfo-sync"), 2) === 1}
+            lfoFastMode={ccToOptionIndex(getVal("lfo-mode"), 2) === 1}
             analyser={audioAnalysers?.spectrum ?? null}
             audioActive={audioActive}
           />

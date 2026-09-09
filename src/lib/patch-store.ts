@@ -240,7 +240,7 @@ export class PatchStore {
     const entries = this.getAllStates().map((s) => ({
       cc: s.def.cc,
       value: s.value,
-      exclude: NO_BULK_SEND.has(s.def.cc) || s.def.excludeBulkSend,
+      exclude: NO_BULK_SEND.has(s.def.cc) || !!s.def.excludeBulkSend,
     }));
     await sendAllParameters(this.transport, this.channel, entries);
     for (const state of this.states.values()) {
