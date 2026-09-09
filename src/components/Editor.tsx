@@ -270,12 +270,12 @@ export default function Editor() {
                     </label>
                   )}
                   <label className="mock-toggle">
+                    Mock MIDI
                     <input
                       type="checkbox"
                       checked={useMock}
                       onChange={(e) => setUseMock(e.target.checked)}
                     />
-                    Mock MIDI
                   </label>
                 </>
               )}

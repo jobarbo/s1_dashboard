@@ -155,10 +155,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 		<div className='viz-block viz-block--scope'>
 			<div className='viz-caption'>USB oscilloscope {active ? "" : "(off)"}</div>
 			<div className='viz-canvas-wrap' ref={wrapRef}>
-				<canvas
-					ref={canvasRef}
-					className={`viz-canvas viz-canvas--scope${!active ? " viz-canvas--idle" : ""}`}
-				/>
+				<canvas ref={canvasRef} className={`viz-canvas viz-canvas--scope${!active ? " viz-canvas--idle" : ""}`} />
 			</div>
 		</div>
 	);
