@@ -50,6 +50,16 @@
 	box-sizing: border-box;
 }
 
+@font-face {
+	font-family: "RolandOwnersManual-7SEGrev2";
+	src:
+		url("/fonts/RolandOwnersManual-7SEGrev2.woff2") format("woff2"),
+		url("/fonts/RolandOwnersManual-7SEGrev2.woff") format("woff");
+	font-weight: normal;
+	font-style: normal;
+	font-display: swap;
+}
+
 html,
 body {
 	margin: 0;
@@ -935,10 +945,12 @@ body {
 }
 
 .ref-code {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-	font-size: 0.9rem;
-	font-weight: 600;
-	padding: 0.1rem 0.4rem;
+	font-family: "RolandOwnersManual-7SEGrev2", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 1.05rem;
+	font-weight: normal;
+	font-style: normal;
+	letter-spacing: 0.04em;
+	padding: 0.12rem 0.45rem 0.18rem;
 	border-radius: 4px;
 	background: rgba(94, 207, 184, 0.12);
 	color: var(--accent);
@@ -1039,13 +1051,23 @@ body {
 
 .ref-options tbody th {
 	font-weight: 500;
-	width: 6rem;
+	width: 5.5rem;
 	white-space: nowrap;
 }
 
+.ref-options-value {
+	width: 7.5rem;
+	white-space: nowrap;
+	font-weight: 600;
+	color: var(--text);
+}
+
 .ref-options code {
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-	font-size: 0.88rem;
+	font-family: "RolandOwnersManual-7SEGrev2", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 1rem;
+	font-weight: normal;
+	font-style: normal;
+	letter-spacing: 0.04em;
 	color: var(--accent);
 }
 

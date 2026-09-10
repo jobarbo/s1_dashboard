@@ -16,7 +16,7 @@ function itemMatches(item: ReferenceItem, q: string): boolean {
     item.note,
     item.midi,
     item.scope,
-    ...(item.options?.flatMap((o) => [o.value, o.meaning]) ?? []),
+    ...(item.options?.flatMap((o) => [o.label, o.value, o.meaning]) ?? []),
   ]
     .filter(Boolean)
     .join(" ")
@@ -68,16 +68,18 @@ function ReferenceEntry({ item }: { item: ReferenceItem }) {
           <caption className="sr-only">Options for {item.name}</caption>
           <thead>
             <tr>
+              <th scope="col">Label</th>
               <th scope="col">Value</th>
               <th scope="col">Meaning</th>
             </tr>
           </thead>
           <tbody>
             {item.options.map((opt) => (
-              <tr key={opt.value}>
+              <tr key={opt.label}>
                 <th scope="row">
-                  <code>{opt.value}</code>
+                  <code>{opt.label}</code>
                 </th>
+                <td className="ref-options-value">{opt.value}</td>
                 <td>{opt.meaning}</td>
               </tr>
             ))}
