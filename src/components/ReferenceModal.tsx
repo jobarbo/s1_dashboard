@@ -1,7 +1,9 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { localizeReference } from "../lib/s1-reference-i18n";
 import { type ReferenceItem, type ReferenceSection } from "../lib/s1-reference";
+import { setChecklistFlag, CHECKLIST_STEPS } from "../lib/onboarding";
 import { useI18n } from "../lib/use-i18n";
+import { ChecklistPage } from "./ChecklistPage";
 
 interface ReferenceModalProps {
   open: boolean;
@@ -126,11 +128,11 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState(pages[0]?.id ?? "menu");
+  const [activeSection, setActiveSection] = useState("getting-started");
 
   const normalizedQuery = query.trim().toLowerCase();
 
-  const visibleSections = useMemo(
+  const wikiSections = useMemo(
     () =>
       pages.map((section) => ({
         section,
@@ -139,18 +141,33 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
     [normalizedQuery, pages],
   );
 
+  const showGettingStarted =
+    !normalizedQuery ||
+    "getting started checklist premier patch".includes(normalizedQuery) ||
+    t("checklistTitle").toLowerCase().includes(normalizedQuery);
+
+  const tocEntries = useMemo(() => {
+    const entries: Array<{ id: string; title: string; count: number }> = [];
+    if (showGettingStarted) {
+      entries.push({ id: "getting-started", title: t("checklistTitle"), count: CHECKLIST_STEPS.length });
+    }
+    for (const { section, count } of wikiSections) {
+      entries.push({ id: section.id, title: section.title, count });
+    }
+    return entries;
+  }, [showGettingStarted, wikiSections, t]);
+
   const activePage =
-    visibleSections.find((s) => s.section.id === activeSection)?.section ??
-    visibleSections[0]?.section ??
-    null;
+    wikiSections.find((s) => s.section.id === activeSection)?.section ?? null;
 
   useEffect(() => {
     if (!open) return;
+    setChecklistFlag("referenceOpened");
 
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    const t = window.setTimeout(() => {
+    const timer = window.setTimeout(() => {
       searchRef.current?.focus({ preventScroll: true });
     }, 0);
 
@@ -162,7 +179,7 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      window.clearTimeout(t);
+      window.clearTimeout(timer);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
     };
@@ -171,16 +188,16 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
   useEffect(() => {
     if (!open) {
       setQuery("");
-      setActiveSection(pages[0]?.id ?? "menu");
+      setActiveSection("getting-started");
     }
   }, [open]);
 
   useEffect(() => {
-    if (!open || visibleSections.length === 0) return;
-    if (!visibleSections.some((s) => s.section.id === activeSection)) {
-      setActiveSection(visibleSections[0].section.id);
+    if (!open || tocEntries.length === 0) return;
+    if (!tocEntries.some((s) => s.id === activeSection)) {
+      setActiveSection(tocEntries[0].id);
     }
-  }, [open, visibleSections, activeSection]);
+  }, [open, tocEntries, activeSection]);
 
   useEffect(() => {
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
@@ -232,27 +249,29 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
           <nav className="ref-toc" aria-label={t("pages")}>
             <p className="ref-toc-label">{t("pages")}</p>
             <ul>
-              {visibleSections.map(({ section, count }) => (
-                <li key={section.id}>
+              {tocEntries.map((entry) => (
+                <li key={entry.id}>
                   <button
                     type="button"
-                    className={activeSection === section.id ? "is-active" : undefined}
-                    aria-current={activeSection === section.id ? "page" : undefined}
-                    onClick={() => setActiveSection(section.id)}
+                    className={activeSection === entry.id ? "is-active" : undefined}
+                    aria-current={activeSection === entry.id ? "page" : undefined}
+                    onClick={() => setActiveSection(entry.id)}
                   >
-                    <span>{section.title}</span>
-                    <span className="ref-toc-count">{count}</span>
+                    <span>{entry.title}</span>
+                    <span className="ref-toc-count">{entry.count}</span>
                   </button>
                 </li>
               ))}
             </ul>
-            {visibleSections.length === 0 ? (
+            {tocEntries.length === 0 ? (
               <p className="ref-empty">{t("noMatchesQuery", { q: query.trim() })}</p>
             ) : null}
           </nav>
 
           <div className="ref-modal-body" ref={bodyRef}>
-            {activePage ? (
+            {activeSection === "getting-started" && showGettingStarted ? (
+              <ChecklistPage key="getting-started" />
+            ) : activePage ? (
               <WikiPage key={activePage.id} section={activePage} query={normalizedQuery} />
             ) : null}
           </div>

@@ -25,6 +25,8 @@ export interface S1ParameterDef {
   excludeBulkSend?: boolean;
   /** Named cluster inside a section (Mix, Chord, etc.) */
   group?: string;
+  /** Keep in store / MIDI / init, but do not render a control */
+  hideInUi?: boolean;
   /**
    * Value shown on the S-1 (TEMPO/VALUE is 0–255 for most knobs).
    * MIDI CC is still 0–127. Omit for 0–127 (toggles/dropdowns).
@@ -57,6 +59,26 @@ export const VIZ_SECTIONS: S1Section[] = ["lfo", "oscillator", "filter", "envelo
 /** CC numbers excluded from Send All (sustain pedal). */
 export const NO_BULK_SEND = new Set([64]);
 
+/** Delay Time (CC 90) when Delay Sync is On — S-1 display labels (CC 0 = shortest). */
+export const DELAY_SYNC_TIME_OPTIONS = [
+  "128",
+  "64t",
+  "128d",
+  "1_64",
+  "32t",
+  "64d",
+  "1_32",
+  "16t",
+  "32d",
+  "1_16",
+  "8t",
+  "16d",
+  "1_8",
+  "4t",
+  "8d",
+  "1_4",
+] as const;
+
 export const S1_PARAMETERS: S1ParameterDef[] = [
   // Controls
   { id: "mod-wheel", name: "Mod Wheel", cc: 1, section: "controls", type: "continuous", initialValue: 0 },
@@ -64,14 +86,14 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   { id: "damper", name: "Damper Pedal", cc: 64, section: "controls", type: "toggle", initialValue: 0, excludeBulkSend: true },
 
   // LFO
-  { id: "lfo-rate", name: "Rate", cc: 3, section: "lfo", type: "continuous", initialValue: 64 },
+  { id: "lfo-rate", name: "Rate", cc: 3, section: "lfo", type: "continuous", initialValue: 0 },
   {
     id: "lfo-waveform",
     name: "Waveform",
     cc: 12,
     section: "lfo",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 2,
     options: ["Sawtooth", "Inv Saw", "Triangle", "Square", "Random", "Noise"],
   },
   { id: "lfo-mod-depth", name: "Mod Depth", cc: 17, section: "lfo", type: "continuous", initialValue: 0 },
@@ -104,7 +126,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   },
 
   // Voice
-  { id: "glide-time", name: "Glide Time", cc: 5, section: "voice", type: "continuous", initialValue: 0 },
+  { id: "glide-time", name: "Glide Time", cc: 5, section: "voice", type: "continuous", initialValue: 15 },
   { id: "pan", name: "Pan", cc: 10, section: "voice", type: "continuous", initialValue: 64 },
   {
     id: "portamento-mode",
@@ -113,9 +135,10 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     section: "voice",
     type: "dropdown",
     initialValue: 0,
-    options: ["Off", "Auto", "On"],
+    // Hardware order: OFF → On → AUto (manual)
+    options: ["Off", "On", "Auto"],
   },
-  { id: "portamento", name: "Porta On", cc: 65, section: "voice", type: "toggle", initialValue: 0 },
+  { id: "portamento", name: "Porta On", cc: 65, section: "voice", type: "toggle", initialValue: 0, hideInUi: true },
   { id: "transpose", name: "Transpose", cc: 77, section: "voice", type: "bipolar", initialValue: 64 },
   {
     id: "polyphony",
@@ -123,7 +146,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     cc: 80,
     section: "voice",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 2,
     options: ["Mono", "Unison", "Poly", "Chord"],
   },
   { id: "ch-v2", name: "Ch V2 On/Off", cc: 81, section: "voice", type: "toggle", initialValue: 0, group: "Chord" },
@@ -141,17 +164,17 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     cc: 14,
     section: "oscillator",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 2,
     options: ["64'", "32'", "16'", "8'", "4'", "2'"],
   },
-  { id: "square-pw", name: "Square PW", cc: 15, section: "oscillator", type: "continuous", initialValue: 64, group: "Pitch / PWM" },
+  { id: "square-pw", name: "Square PW", cc: 15, section: "oscillator", type: "continuous", initialValue: 0, group: "Pitch / PWM" },
   {
     id: "pwm-source",
     name: "PWM Source",
     cc: 16,
     section: "oscillator",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 2,
     options: ["Envelope", "Manual", "LFO"],
   },
   { id: "osc-bend", name: "Bend Amount", cc: 18, section: "oscillator", type: "continuous", initialValue: 0, group: "Pitch / PWM" },
@@ -164,7 +187,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     cc: 22,
     section: "oscillator",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 2,
     options: ["-2 Oct Asym", "-2 Oct", "-1 Oct"],
   },
   { id: "noise-level", name: "Noise", cc: 23, section: "oscillator", type: "continuous", initialValue: 0, group: "Mix" },
@@ -180,7 +203,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   },
   { id: "draw-multiply", name: "Draw Multiply", cc: 102, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
   { id: "chop-overtone", name: "Chop Overtone", cc: 103, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
-  { id: "chop-comb", name: "Chop Comb", cc: 104, section: "oscillator", type: "continuous", initialValue: 0, group: "Draw / Chop" },
+  { id: "chop-comb", name: "Chop Comb", cc: 104, section: "oscillator", type: "continuous", initialValue: 3, group: "Draw / Chop" },
   {
     id: "draw-sw",
     name: "Draw",
@@ -206,7 +229,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     cc: 28,
     section: "envelope",
     type: "dropdown",
-    initialValue: 0,
+    initialValue: 1,
     options: ["Gate", "Envelope"],
   },
   {
@@ -215,7 +238,7 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
     cc: 29,
     section: "envelope",
     type: "dropdown",
-    initialValue: 1,
+    initialValue: 2,
     options: ["LFO", "Gate", "Gate+Trig"],
   },
   { id: "env-attack", name: "Attack", cc: 73, section: "envelope", type: "continuous", initialValue: 0 },
@@ -224,9 +247,18 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
   { id: "env-release", name: "Release", cc: 72, section: "envelope", type: "continuous", initialValue: 0 },
 
   // Effects (MIDI CCs only — deeper menus: see Reference modal)
-  { id: "reverb-time", name: "Time", cc: 89, section: "effects", type: "continuous", initialValue: 64, group: "Reverb" },
+  { id: "reverb-time", name: "Time", cc: 89, section: "effects", type: "continuous", initialValue: 60, group: "Reverb" },
   { id: "reverb-level", name: "Level", cc: 91, section: "effects", type: "continuous", initialValue: 0, group: "Reverb" },
-  { id: "delay-time", name: "Time", cc: 90, section: "effects", type: "continuous", initialValue: 64, group: "Delay" },
+  {
+    id: "delay-time",
+    name: "Time",
+    cc: 90,
+    section: "effects",
+    type: "dropdown",
+    initialValue: 15,
+    group: "Delay",
+    options: DELAY_SYNC_TIME_OPTIONS,
+  },
   { id: "delay-level", name: "Level", cc: 92, section: "effects", type: "continuous", initialValue: 0, group: "Delay" },
   {
     id: "chorus-type",
@@ -242,6 +274,15 @@ export const S1_PARAMETERS: S1ParameterDef[] = [
 
 export const PARAM_BY_CC = new Map(S1_PARAMETERS.map((p) => [p.cc, p]));
 export const PARAM_BY_ID = new Map(S1_PARAMETERS.map((p) => [p.id, p]));
+
+/** Factory-style init captured from a real S-1 (square mix, Poly, 16′, delay level off). */
+export function getInitSquareValues(): Record<string, number> {
+  const values: Record<string, number> = {};
+  for (const def of S1_PARAMETERS) {
+    values[def.id] = def.initialValue;
+  }
+  return values;
+}
 
 export function getParamsBySection(section: S1Section): S1ParameterDef[] {
   return S1_PARAMETERS.filter((p) => p.section === section);

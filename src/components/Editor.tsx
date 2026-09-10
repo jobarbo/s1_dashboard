@@ -21,6 +21,8 @@ import { LanguageToggle } from "./LanguageToggle";
 import { ReferenceModal } from "./ReferenceModal";
 import { SectionCard } from "./SectionCard";
 import { SectionVisualizer } from "./SectionVisualizer";
+import { SnapshotsPanel } from "./SnapshotsPanel";
+import { TempoBadge } from "./TempoBadge";
 import { ThemeToggle } from "./ThemeToggle";
 import { UsbAudioWaveform } from "./visualizers/UsbAudioVisualizers";
 import { useI18n } from "../lib/use-i18n";
@@ -30,6 +32,45 @@ let storeSingleton: PatchStore | null = null;
 function getStore(): PatchStore {
   if (!storeSingleton) storeSingleton = createPatchStore();
   return storeSingleton;
+}
+
+function SpeakerIcon({ muted }: { muted: boolean }) {
+  if (muted) {
+    return (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M11 5 6 9H3v6h3l5 4V5z"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="m16 9 5 5M21 9l-5 5"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M11 5 6 9H3v6h3l5 4V5z"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
 }
 
 export default function Editor() {
@@ -47,8 +88,10 @@ export default function Editor() {
   const [audioInputs, setAudioInputs] = useState<AudioInputDevice[]>([]);
   const [selectedAudioId, setSelectedAudioId] = useState("");
   const [audioActive, setAudioActive] = useState(false);
+  const [audioMonitor, setAudioMonitor] = useState(false);
   const [audioAnalysers, setAudioAnalysers] = useState<UsbAudioAnalysers | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const [snapshotsOpen, setSnapshotsOpen] = useState(false);
   const audioSessionRef = useRef<UsbAudioSession | null>(null);
 
   useEffect(() => {
@@ -102,21 +145,42 @@ export default function Editor() {
     audioSessionRef.current = null;
     setAudioAnalysers(null);
     setAudioActive(false);
+    setAudioMonitor(false);
   }, []);
 
-  const startAudio = useCallback(async (deviceId?: string) => {
+  const startAudio = useCallback(async (deviceId?: string, monitor = false) => {
     setAudioError(null);
     try {
       stopAudio();
       const session = await startUsbAudioCapture(deviceId || selectedAudioId || undefined);
+      session.setMonitorEnabled(monitor);
       audioSessionRef.current = session;
       setAudioAnalysers(session.analysers);
       setAudioActive(true);
+      setAudioMonitor(monitor);
     } catch (err) {
       setAudioError(err instanceof Error ? err.message : t("audioStartFailed"));
       setAudioActive(false);
+      setAudioMonitor(false);
     }
   }, [selectedAudioId, stopAudio, t]);
+
+  const toggleSpeaker = useCallback(async () => {
+    if (audioMonitor) {
+      audioSessionRef.current?.setMonitorEnabled(false);
+      setAudioMonitor(false);
+      return;
+    }
+    if (audioSessionRef.current) {
+      if (audioSessionRef.current.context.state === "suspended") {
+        await audioSessionRef.current.context.resume();
+      }
+      audioSessionRef.current.setMonitorEnabled(true);
+      setAudioMonitor(true);
+      return;
+    }
+    await startAudio(undefined, true);
+  }, [audioMonitor, startAudio]);
 
   const handleConnect = async () => {
     setError(null);
@@ -141,7 +205,8 @@ export default function Editor() {
           setAudioInputs(devices);
           const s1 = pickS1AudioDevice(devices);
           const id = selectedAudioId || s1?.deviceId;
-          if (id) await startAudio(id);
+          // Capture for visualizers; speaker stays off until the user toggles it.
+          if (id) await startAudio(id, false);
         }
       }
     } catch (err) {
@@ -172,6 +237,7 @@ export default function Editor() {
   const outputLabel = transportInfo
     ? transportInfo.output || t("unknownPort")
     : "";
+  const speakerLabel = audioMonitor ? t("audioSpeakerOn") : t("audioSpeakerOff");
 
   return (
     <div className="editor">
@@ -184,6 +250,34 @@ export default function Editor() {
         <div className="header-actions">
           <LanguageToggle />
           <ThemeToggle />
+          {isAudioInputSupported() && (
+            <button
+              type="button"
+              className={`btn btn-ghost btn-icon${audioMonitor ? " btn-icon-active" : ""}`}
+              title={speakerLabel}
+              aria-label={speakerLabel}
+              aria-pressed={audioMonitor}
+              onClick={() => void toggleSpeaker()}
+            >
+              <SpeakerIcon muted={!audioMonitor} />
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon"
+            title={t("snapshots")}
+            aria-label={t("snapshots")}
+            onClick={() => setSnapshotsOpen(true)}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M4 7h16M4 12h16M4 17h10"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
           <button
             type="button"
             className="btn btn-ghost btn-icon"
@@ -214,6 +308,8 @@ export default function Editor() {
               />
             </svg>
           </button>
+
+          <TempoBadge />
 
           {!isWebMidiSupported() && (
             <span className="badge badge-warn">{t("webMidiUnavailable")}</span>
@@ -310,19 +406,21 @@ export default function Editor() {
               <button type="button" className="btn" onClick={() => store.sendTestNote()}>
                 {t("testNote")}
               </button>
-              {isAudioInputSupported() && !transportInfo?.isMock && (
-                audioActive ? (
-                  <button type="button" className="btn btn-ghost" onClick={stopAudio}>
-                    {t("stopAudio")}
-                  </button>
-                ) : (
-                  <button type="button" className="btn" onClick={() => startAudio()}>
-                    {t("startAudio")}
-                  </button>
-                )
-              )}
-              <button type="button" className="btn" onClick={() => store.sendAll()}>
+              <button
+                type="button"
+                className="btn"
+                title={t("sendAllTitle")}
+                onClick={() => void store.sendAll()}
+              >
                 {t("sendAll")}
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                title={t("initSquareTitle")}
+                onClick={() => void store.sendInitSquare()}
+              >
+                {t("initSquare")}
               </button>
               <button type="button" className="btn" onClick={() => store.panic()}>
                 {t("panic")}
@@ -407,6 +505,7 @@ export default function Editor() {
       </footer>
 
       <ReferenceModal open={referenceOpen} onClose={() => setReferenceOpen(false)} />
+      <SnapshotsPanel store={store} open={snapshotsOpen} onClose={() => setSnapshotsOpen(false)} />
     </div>
   );
 }
