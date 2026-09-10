@@ -179,9 +179,22 @@ export default function Editor() {
             onClick={() => setReferenceOpen(true)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
               <path
-                d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.4 4.4l2.1 2.1M17.5 17.5l2.1 2.1M4.4 19.6l2.1-2.1M17.5 6.5l2.1-2.1"
+                d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8 7h8M8 11h6"
                 stroke="currentColor"
                 strokeWidth="1.75"
                 strokeLinecap="round"
