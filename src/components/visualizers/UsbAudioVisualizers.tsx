@@ -1,4 +1,5 @@
 import {useEffect, useRef} from "react";
+import {useI18n} from "../../lib/use-i18n";
 import {getVizPalette} from "../../lib/viz-theme";
 
 interface UsbAudioWaveformProps {
@@ -7,6 +8,7 @@ interface UsbAudioWaveformProps {
 }
 
 export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
+	const {t} = useI18n();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const wrapRef = useRef<HTMLDivElement>(null);
 	const rafRef = useRef(0);
@@ -156,7 +158,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 	return (
 		<div className='viz-block viz-block--scope'>
-			<div className='viz-caption'>USB oscilloscope {active ? "" : "(off)"}</div>
+			<div className='viz-caption'>{t("vizScope")} {active ? "" : t("vizScopeOff")}</div>
 			<div className='viz-canvas-wrap' ref={wrapRef}>
 				<canvas ref={canvasRef} className={`viz-canvas viz-canvas--scope${!active ? " viz-canvas--idle" : ""}`} />
 			</div>

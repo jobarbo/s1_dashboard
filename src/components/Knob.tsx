@@ -86,10 +86,7 @@ export function Knob({
         <div className="knob-ring" />
         <div className="knob-pointer" style={{ transform: `rotate(${angle}deg)` }} />
       </div>
-      <span className="knob-label">
-        {label}
-        {!synced && <span className="unsynced-mark">?</span>}
-      </span>
+      <span className="knob-label">{label}</span>
       <span className="knob-value">{displayValue}</span>
     </div>
   );

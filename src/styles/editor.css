@@ -234,6 +234,41 @@ body {
 	color: var(--text);
 }
 
+.lang-toggle {
+	display: inline-flex;
+	align-items: stretch;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	overflow: hidden;
+	align-self: flex-end;
+	height: 1.75rem;
+}
+
+.lang-toggle button {
+	padding: 0 0.5rem;
+	border: 0;
+	background: transparent;
+	color: var(--text-muted);
+	font-size: 0.7rem;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	cursor: pointer;
+}
+
+.lang-toggle button + button {
+	border-left: 1px solid var(--border);
+}
+
+.lang-toggle button:hover {
+	color: var(--text);
+	background: var(--bg-card-hover);
+}
+
+.lang-toggle button.is-active {
+	color: var(--accent);
+	background: var(--header-tint);
+}
+
 .alert {
 	padding: 0.55rem 0.85rem;
 	border-radius: 8px;
@@ -642,10 +677,10 @@ body {
 	line-height: 1.15;
 }
 
-.unsynced-mark {
+.knob.unsynced .knob-label,
+.toggle.unsynced .toggle-label,
+.select-control.unsynced .select-label {
 	color: var(--warn);
-	font-weight: 600;
-	font-size: 0.68rem;
 }
 
 .toggle-row {
@@ -664,11 +699,6 @@ body {
 	color: var(--text-muted);
 	font-variant-numeric: tabular-nums;
 	font-size: 0.68rem;
-}
-
-.toggle.unsynced .toggle-value,
-.select-control.unsynced .select-value {
-	color: var(--warn);
 }
 
 .select-control select {

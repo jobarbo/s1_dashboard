@@ -35,7 +35,7 @@ export interface ReferenceSection {
   items: ReferenceItem[];
 }
 
-const MENU_HOW = "SHIFT + pad 15 (MENU) → select → pad 2 (ENTER)";
+export const MENU_HOW = "SHIFT + pad 15 (MENU) → select → pad 2 (ENTER)";
 
 export const S1_REFERENCE: ReferenceSection[] = [
   {

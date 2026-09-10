@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { S1_REFERENCE, type ReferenceItem, type ReferenceSection } from "../lib/s1-reference";
+import { localizeReference } from "../lib/s1-reference-i18n";
+import { type ReferenceItem, type ReferenceSection } from "../lib/s1-reference";
+import { useI18n } from "../lib/use-i18n";
 
 interface ReferenceModalProps {
   open: boolean;
@@ -25,12 +27,15 @@ function itemMatches(item: ReferenceItem, q: string): boolean {
 }
 
 function ScopeBadge({ scope }: { scope?: ReferenceItem["scope"] }) {
+  const { t } = useI18n();
   if (!scope) return null;
-  const label = scope === "pattern" ? "Pattern" : scope === "system" ? "System" : "Action";
+  const label =
+    scope === "pattern" ? t("scopePattern") : scope === "system" ? t("scopeSystem") : t("scopeAction");
   return <span className={`ref-scope ref-scope--${scope}`}>{label}</span>;
 }
 
 function ReferenceEntry({ item }: { item: ReferenceItem }) {
+  const { t } = useI18n();
   return (
     <article className="ref-entry">
       <header className="ref-entry-head">
@@ -52,12 +57,12 @@ function ReferenceEntry({ item }: { item: ReferenceItem }) {
 
       <dl className="ref-dl">
         <div className="ref-dl-row">
-          <dt>Access</dt>
+          <dt>{t("access")}</dt>
           <dd>{item.how}</dd>
         </div>
         {item.values ? (
           <div className="ref-dl-row">
-            <dt>Values</dt>
+            <dt>{t("values")}</dt>
             <dd>{item.values}</dd>
           </div>
         ) : null}
@@ -65,12 +70,12 @@ function ReferenceEntry({ item }: { item: ReferenceItem }) {
 
       {item.options && item.options.length > 0 ? (
         <table className="ref-options">
-          <caption className="sr-only">Options for {item.name}</caption>
+          <caption className="sr-only">{t("optionsFor", { name: item.name })}</caption>
           <thead>
             <tr>
-              <th scope="col">Label</th>
-              <th scope="col">Value</th>
-              <th scope="col">Meaning</th>
+              <th scope="col">{t("label")}</th>
+              <th scope="col">{t("value")}</th>
+              <th scope="col">{t("meaning")}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,9 +98,10 @@ function ReferenceEntry({ item }: { item: ReferenceItem }) {
 }
 
 function WikiPage({ section, query }: { section: ReferenceSection; query: string }) {
+  const { t } = useI18n();
   const items = section.items.filter((item) => itemMatches(item, query));
   if (items.length === 0) {
-    return <p className="ref-empty">No matches on this page.</p>;
+    return <p className="ref-empty">{t("noMatchesPage")}</p>;
   }
 
   return (
@@ -112,23 +118,25 @@ function WikiPage({ section, query }: { section: ReferenceSection; query: string
 }
 
 export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
+  const { t, locale } = useI18n();
+  const pages = useMemo(() => localizeReference(locale), [locale]);
   const titleId = useId();
   const descId = useId();
   const searchId = useId();
   const searchRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
-  const [activeSection, setActiveSection] = useState(S1_REFERENCE[0]?.id ?? "menu");
+  const [activeSection, setActiveSection] = useState(pages[0]?.id ?? "menu");
 
   const normalizedQuery = query.trim().toLowerCase();
 
   const visibleSections = useMemo(
     () =>
-      S1_REFERENCE.map((section) => ({
+      pages.map((section) => ({
         section,
         count: section.items.filter((item) => itemMatches(item, normalizedQuery)).length,
       })).filter((s) => s.count > 0),
-    [normalizedQuery],
+    [normalizedQuery, pages],
   );
 
   const activePage =
@@ -163,7 +171,7 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
   useEffect(() => {
     if (!open) {
       setQuery("");
-      setActiveSection(S1_REFERENCE[0]?.id ?? "menu");
+      setActiveSection(pages[0]?.id ?? "menu");
     }
   }, [open]);
 
@@ -192,16 +200,14 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
       >
         <header className="ref-modal-header">
           <div>
-            <h2 id={titleId}>S-1 reference</h2>
-            <p id={descId}>
-              Hardware menu wiki — MENU (SHIFT + pad 15), effect menus, and MIDI limits.
-            </p>
+            <h2 id={titleId}>{t("refTitle")}</h2>
+            <p id={descId}>{t("refSubtitle")}</p>
           </div>
           <button
             type="button"
             className="btn btn-ghost ref-modal-close"
             onClick={onClose}
-            aria-label="Close reference"
+            aria-label={t("closeReference")}
           >
             ✕
           </button>
@@ -209,22 +215,22 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
 
         <div className="ref-modal-toolbar">
           <label className="ref-search" htmlFor={searchId}>
-            <span className="sr-only">Search reference</span>
+            <span className="sr-only">{t("searchReference")}</span>
             <input
               ref={searchRef}
               id={searchId}
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search menu codes, values…"
+              placeholder={t("searchPlaceholder")}
               autoComplete="off"
             />
           </label>
         </div>
 
         <div className="ref-modal-layout">
-          <nav className="ref-toc" aria-label="Reference pages">
-            <p className="ref-toc-label">Pages</p>
+          <nav className="ref-toc" aria-label={t("pages")}>
+            <p className="ref-toc-label">{t("pages")}</p>
             <ul>
               {visibleSections.map(({ section, count }) => (
                 <li key={section.id}>
@@ -241,7 +247,7 @@ export function ReferenceModal({ open, onClose }: ReferenceModalProps) {
               ))}
             </ul>
             {visibleSections.length === 0 ? (
-              <p className="ref-empty">No matches for “{query.trim()}”.</p>
+              <p className="ref-empty">{t("noMatchesQuery", { q: query.trim() })}</p>
             ) : null}
           </nav>
 

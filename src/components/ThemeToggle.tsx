@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { applyTheme, getPreferredTheme, setTheme, type ThemeMode } from "../lib/theme";
+import { useI18n } from "../lib/use-i18n";
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setThemeState] = useState<ThemeMode>("dark");
 
   useEffect(() => {
@@ -11,7 +13,7 @@ export function ThemeToggle() {
   }, []);
 
   const next = theme === "dark" ? "light" : "dark";
-  const label = next === "light" ? "Switch to light mode" : "Switch to dark mode";
+  const label = next === "light" ? t("themeToLight") : t("themeToDark");
 
   return (
     <button

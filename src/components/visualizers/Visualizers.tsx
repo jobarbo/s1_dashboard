@@ -1,4 +1,5 @@
 import {useEffect, useRef} from "react";
+import {useI18n} from "../../lib/use-i18n";
 import {
 	ADSR_MAX,
 	bestLfoPhase,
@@ -36,6 +37,7 @@ interface OscVisualizerProps {
 }
 
 export function OscVisualizer({square, saw, sub, noise, pulseWidth, drawMode, subOct, compact}: OscVisualizerProps) {
+	const {t} = useI18n();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const rafRef = useRef(0);
 	const noisePhaseRef = useRef(0);
@@ -107,14 +109,14 @@ export function OscVisualizer({square, saw, sub, noise, pulseWidth, drawMode, su
 				{compact
 					? drawMode > 0
 						? drawMode === 1
-							? "Wave (Draw Step)"
-							: "Wave (Draw Slope)"
-						: "Wave (CC est.)"
+							? t("vizWaveDrawStep")
+							: t("vizWaveDrawSlope")
+						: t("vizWaveCcEst")
 					: drawMode > 0
 						? drawMode === 1
-							? "Draw oscillator (step, schematic)"
-							: "Draw oscillator (slope, schematic)"
-						: "Oscillator mix (estimated)"}
+							? t("vizOscDrawStep")
+							: t("vizOscDrawSlope")
+						: t("vizOscMixEst")}
 			</div>
 			<div className='viz-canvas-wrap' ref={wrapRef}>
 				<canvas ref={canvasRef} width={width} height={height} className='viz-canvas' />
@@ -483,6 +485,7 @@ export function FilterVisualizer({
 	audioActive = false,
 	compact,
 }: FilterVisualizerProps) {
+	const {t} = useI18n();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const rafRef = useRef(0);
 	const specGainRef = useRef(1);
@@ -650,23 +653,23 @@ export function FilterVisualizer({
 			<div className='viz-caption'>
 				{compact
 					? lfoAmount > 0
-						? "Filter + LFO (dashed)"
+						? t("vizFilterLfo")
 						: audioActive
 							? envAmount > 0
-								? "Filter + ADSR time overlay"
-								: "Filter + USB spectrum"
+								? t("vizFilterAdsr")
+								: t("vizFilterUsb")
 							: envAmount > 0
-								? "Filter + ADSR time overlay"
-								: "Filter curve (CC)"
+								? t("vizFilterAdsr")
+								: t("vizFilterCc")
 					: lfoAmount > 0
-						? "Orange = cutoff · Violet dashed = Filter LFO"
+						? t("vizFilterLfoHint")
 						: audioActive
 							? envAmount > 0
-								? "Orange = cutoff (freq). Dotted A→D→S→R = time, left to right"
-								: "Filter curve over live USB spectrum"
+								? t("vizFilterAdsrLiveHint")
+								: t("vizFilterUsbHint")
 							: envAmount > 0
-								? "Filter response with A/D/S/R env overlays"
-								: "Filter response (estimated)"}
+								? t("vizFilterAdsrHint")
+								: t("vizFilterEst")}
 			</div>
 			<div className='viz-canvas-wrap' ref={wrapRef}>
 				<canvas ref={canvasRef} width={width} height={height} className='viz-canvas' />
@@ -695,6 +698,7 @@ function adsrLevelAtX(x: number, x0: number, x1: number, x2: number, x3: number,
 }
 
 export function AdsrVisualizer({attack, decay, sustain, release, analyser = null, audioActive = false, compact}: AdsrVisualizerProps) {
+	const {t} = useI18n();
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const rafRef = useRef(0);
 	const {wrapRef, width, height} = useVizFillSize();
@@ -827,7 +831,13 @@ export function AdsrVisualizer({attack, decay, sustain, release, analyser = null
 	return (
 		<div className={`viz-block${compact ? " viz-block--compact" : ""}`}>
 			<div className='viz-caption'>
-				{compact ? (audioActive ? "ADSR + USB wave" : "ADSR × tone (amp)") : audioActive ? "Live USB wave with estimated amp envelope" : "Amplitude envelope on a tone (estimated)"}
+				{compact
+					? audioActive
+						? t("vizAdsrUsb")
+						: t("vizAdsrTone")
+					: audioActive
+						? t("vizAdsrUsbFull")
+						: t("vizAdsrToneFull")}
 			</div>
 			<div className='viz-canvas-wrap' ref={wrapRef}>
 				<canvas ref={canvasRef} width={width} height={height} className='viz-canvas' />

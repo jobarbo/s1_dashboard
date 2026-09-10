@@ -23,6 +23,14 @@ import '../styles/editor.css';
                 : "dark";
           document.documentElement.dataset.theme = theme;
           document.documentElement.style.colorScheme = theme;
+          var loc = localStorage.getItem("s1-locale");
+          var lang =
+            loc === "fr" || loc === "en"
+              ? loc
+              : (navigator.language || "").toLowerCase().indexOf("fr") === 0
+                ? "fr"
+                : "en";
+          document.documentElement.lang = lang;
         } catch (e) {
           document.documentElement.dataset.theme = "dark";
         }

@@ -5,13 +5,7 @@ import {
   SECTION_ORDER,
   VIZ_SECTIONS,
 } from "../lib/parameters";
-import {
-  isWebMidiSupported,
-  listMidiPorts,
-  MockMidiTransport,
-  type MidiPortInfo,
-  WebMidiTransport,
-} from "../lib/midi";
+import { MIDI_NO_INPUT, isWebMidiSupported, listMidiPorts, MockMidiTransport, type MidiPortInfo, WebMidiTransport } from "../lib/midi";
 import { createPatchStore, type PatchStore } from "../lib/patch-store";
 import {
   isAudioInputSupported,
@@ -23,11 +17,13 @@ import {
   type UsbAudioSession,
 } from "../lib/usb-audio";
 import { ParameterGrid } from "./ParameterControl";
+import { LanguageToggle } from "./LanguageToggle";
 import { ReferenceModal } from "./ReferenceModal";
 import { SectionCard } from "./SectionCard";
 import { SectionVisualizer } from "./SectionVisualizer";
 import { ThemeToggle } from "./ThemeToggle";
 import { UsbAudioWaveform } from "./visualizers/UsbAudioVisualizers";
+import { useI18n } from "../lib/use-i18n";
 
 let storeSingleton: PatchStore | null = null;
 
@@ -37,6 +33,7 @@ function getStore(): PatchStore {
 }
 
 export default function Editor() {
+  const { t, locale } = useI18n();
   const store = useMemo(() => getStore(), []);
   const [, tick] = useState(0);
   const [connecting, setConnecting] = useState(false);
@@ -116,10 +113,10 @@ export default function Editor() {
       setAudioAnalysers(session.analysers);
       setAudioActive(true);
     } catch (err) {
-      setAudioError(err instanceof Error ? err.message : "Failed to start USB audio");
+      setAudioError(err instanceof Error ? err.message : t("audioStartFailed"));
       setAudioActive(false);
     }
-  }, [selectedAudioId, stopAudio]);
+  }, [selectedAudioId, stopAudio, t]);
 
   const handleConnect = async () => {
     setError(null);
@@ -148,7 +145,7 @@ export default function Editor() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to connect MIDI");
+      setError(err instanceof Error ? err.message : t("midiConnectFailed"));
     } finally {
       setConnecting(false);
     }
@@ -163,21 +160,35 @@ export default function Editor() {
     store.setValue(id, value);
   };
 
+  useEffect(() => {
+    document.title = t("pageTitle");
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute("content", t("pageDescription"));
+  }, [locale, t]);
+
+  const [connectBefore, connectAfter] = t("connectHint").split("{aira}");
+  const noMidiIn =
+    connected && transportInfo && !transportInfo.isMock && (transportInfo.input === MIDI_NO_INPUT || transportInfo.input.startsWith("(none"));
+  const outputLabel = transportInfo
+    ? transportInfo.output || t("unknownPort")
+    : "";
+
   return (
     <div className="editor">
       <header className="editor-header">
         <div className="brand">
-          <h1>S-1 Web Editor</h1>
-          <p className="subtitle">Unofficial Roland AIRA Compact S-1 dashboard</p>
+          <h1>{t("appTitle")}</h1>
+          <p className="subtitle">{t("appSubtitle")}</p>
         </div>
 
         <div className="header-actions">
+          <LanguageToggle />
           <ThemeToggle />
           <button
             type="button"
             className="btn btn-ghost btn-icon"
-            title="S-1 reference (menu-only options)"
-            aria-label="Open S-1 reference"
+            title={t("openReferenceTitle")}
+            aria-label={t("openReference")}
             onClick={() => setReferenceOpen(true)}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -205,23 +216,23 @@ export default function Editor() {
           </button>
 
           {!isWebMidiSupported() && (
-            <span className="badge badge-warn">Web MIDI unavailable — using mock</span>
+            <span className="badge badge-warn">{t("webMidiUnavailable")}</span>
           )}
           {connected && transportInfo && (
             <span className="badge badge-ok">
-              {transportInfo.isMock ? "Mock" : "Live"} · out: {transportInfo.output}
+              {transportInfo.isMock ? t("mock") : t("live")} · {t("out")}: {outputLabel}
             </span>
           )}
-          {audioActive && <span className="badge badge-ok">USB audio live</span>}
-          {connected && transportInfo && !transportInfo.isMock && transportInfo.input.startsWith("(none") && (
-            <span className="badge badge-warn">No MIDI input port</span>
+          {audioActive && <span className="badge badge-ok">{t("usbAudioLive")}</span>}
+          {noMidiIn && (
+            <span className="badge badge-warn">{t("noMidiInputPort")}</span>
           )}
           {connected && unsynced > 0 && (
-            <span className="badge badge-warn">{unsynced} unsynced</span>
+            <span className="badge badge-warn">{t("unsyncedCount", { n: unsynced })}</span>
           )}
 
           <label className="channel-input">
-            Ch
+            {t("channel")}
             <input
               type="number"
               min={1}
@@ -237,12 +248,12 @@ export default function Editor() {
               {isWebMidiSupported() && (
                 <>
                   <label className="port-select">
-                    MIDI out
+                    {t("midiOut")}
                     <select
                       value={selectedOutputId}
                       onChange={(e) => setSelectedOutputId(e.target.value)}
                     >
-                      <option value="">Auto-detect S-1</option>
+                      <option value="">{t("autoDetectS1")}</option>
                       {midiOutputs.map((port) => (
                         <option key={port.id} value={port.id}>
                           {port.name}
@@ -251,12 +262,12 @@ export default function Editor() {
                     </select>
                   </label>
                   <label className="port-select">
-                    MIDI in
+                    {t("midiIn")}
                     <select
                       value={selectedInputId}
                       onChange={(e) => setSelectedInputId(e.target.value)}
                     >
-                      <option value="">Auto-detect S-1</option>
+                      <option value="">{t("autoDetectS1")}</option>
                       {midiInputs.map((port) => (
                         <option key={port.id} value={port.id}>
                           {port.name}
@@ -266,12 +277,12 @@ export default function Editor() {
                   </label>
                   {isAudioInputSupported() && (
                     <label className="port-select">
-                      Audio in
+                      {t("audioIn")}
                       <select
                         value={selectedAudioId}
                         onChange={(e) => setSelectedAudioId(e.target.value)}
                       >
-                        <option value="">Auto-detect S-1</option>
+                        <option value="">{t("autoDetectS1")}</option>
                         {audioInputs.map((port) => (
                           <option key={port.deviceId} value={port.deviceId}>
                             {port.label}
@@ -281,7 +292,7 @@ export default function Editor() {
                     </label>
                   )}
                   <label className="mock-toggle">
-                    Mock MIDI
+                    {t("mockMidi")}
                     <input
                       type="checkbox"
                       checked={useMock}
@@ -291,33 +302,33 @@ export default function Editor() {
                 </>
               )}
               <button type="button" className="btn btn-primary" disabled={connecting} onClick={handleConnect}>
-                {connecting ? "Connecting…" : "Connect"}
+                {connecting ? t("connecting") : t("connect")}
               </button>
             </>
           ) : (
             <>
               <button type="button" className="btn" onClick={() => store.sendTestNote()}>
-                Test note
+                {t("testNote")}
               </button>
               {isAudioInputSupported() && !transportInfo?.isMock && (
                 audioActive ? (
                   <button type="button" className="btn btn-ghost" onClick={stopAudio}>
-                    Stop audio
+                    {t("stopAudio")}
                   </button>
                 ) : (
                   <button type="button" className="btn" onClick={() => startAudio()}>
-                    Start audio
+                    {t("startAudio")}
                   </button>
                 )
               )}
               <button type="button" className="btn" onClick={() => store.sendAll()}>
-                Send All
+                {t("sendAll")}
               </button>
               <button type="button" className="btn" onClick={() => store.panic()}>
-                Panic
+                {t("panic")}
               </button>
               <button type="button" className="btn btn-ghost" onClick={handleDisconnect}>
-                Disconnect
+                {t("disconnect")}
               </button>
             </>
           )}
@@ -329,15 +340,15 @@ export default function Editor() {
 
       {!connected && (
         <div className="alert alert-info">
-          <strong>Before connecting:</strong> Turn <strong>AIRA LINK</strong> off on the S-1, then power-cycle.
-          Connect starts MIDI and USB audio (browser will ask for mic/audio permission — pick your S-1 input).
+          <strong>{t("connectHintTitle")}</strong> {connectBefore}
+          <strong>AIRA LINK</strong>
+          {connectAfter}
         </div>
       )}
 
       {connected && !transportInfo?.isMock && (
         <div className="alert alert-info">
-          CC visualizers in each section are estimates. The top oscilloscope shows live USB audio. The Filter
-          graph overlays the live USB spectrum on the estimated cutoff curve.
+          {t("liveHint")}
         </div>
       )}
 
@@ -349,7 +360,7 @@ export default function Editor() {
       )}
 
       <div className="dash-top">
-        <SectionCard title="Oscilloscope" className="scope-panel">
+        <SectionCard title={t("oscilloscope")} className="scope-panel">
           <UsbAudioWaveform
             analyser={audioAnalysers?.waveform ?? null}
             active={audioActive}
@@ -391,8 +402,7 @@ export default function Editor() {
 
       <footer className="editor-footer">
         <p>
-          Not affiliated with Roland. Save patterns on the hardware (Shift + Write). CC-only — no
-          SysEx, no .PRM writing in v1.
+          {t("footer")}
         </p>
       </footer>
 

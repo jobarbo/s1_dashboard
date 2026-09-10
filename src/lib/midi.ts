@@ -1,3 +1,7 @@
+import { t } from "./messages";
+
+export const MIDI_NO_INPUT = "";
+
 export interface MidiTransport {
   readonly isMock: boolean;
   readonly inputName: string;
@@ -131,7 +135,7 @@ function getPortById(access: MIDIAccess, id: string | undefined, direction: "inp
 
 export async function requestWebMidiAccess(): Promise<MIDIAccess> {
   if (!isWebMidiSupported()) {
-    throw new Error("Web MIDI is not supported in this browser. Use Chrome or Edge.");
+    throw new Error(t("midiUnsupported"));
   }
   return navigator.requestMIDIAccess();
 }
@@ -168,15 +172,15 @@ export class WebMidiTransport implements MidiTransport {
       pickBestPort([...access.inputs.values()]);
 
     if (!output) {
-      throw new Error("No MIDI output device found. Connect your S-1 via USB and turn AIRA LINK off.");
+      throw new Error(t("midiNoOutput"));
     }
 
     const transport = new WebMidiTransport(input?.id, output.id);
     transport.access = access;
     transport.input = input ?? null;
     transport.output = output;
-    transport.inputName = input?.name ?? "(none — hardware knob sync unavailable)";
-    transport.outputName = output.name ?? "Unknown";
+    transport.inputName = input?.name ?? MIDI_NO_INPUT;
+    transport.outputName = output.name ?? t("unknownPort");
     return transport;
   }
 

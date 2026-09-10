@@ -1,3 +1,5 @@
+import { t } from "./messages";
+
 export interface AudioInputDevice {
   deviceId: string;
   label: string;
@@ -46,7 +48,7 @@ export async function listAudioInputDevices(): Promise<AudioInputDevice[]> {
     .filter((d) => d.kind === "audioinput")
     .map((d) => ({
       deviceId: d.deviceId,
-      label: d.label || `Audio input ${d.deviceId.slice(0, 6)}…`,
+      label: d.label || t("audioInputUnlabeled", { id: d.deviceId.slice(0, 6) }),
     }));
 }
 
