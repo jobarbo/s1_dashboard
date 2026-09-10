@@ -26,6 +26,7 @@ import { ParameterGrid } from "./ParameterControl";
 import { ReferenceModal } from "./ReferenceModal";
 import { SectionCard } from "./SectionCard";
 import { SectionVisualizer } from "./SectionVisualizer";
+import { ThemeToggle } from "./ThemeToggle";
 import { UsbAudioWaveform } from "./visualizers/UsbAudioVisualizers";
 
 let storeSingleton: PatchStore | null = null;
@@ -171,6 +172,7 @@ export default function Editor() {
         </div>
 
         <div className="header-actions">
+          <ThemeToggle />
           <button
             type="button"
             className="btn btn-ghost btn-icon"

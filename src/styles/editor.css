@@ -1,4 +1,5 @@
-:root {
+:root,
+[data-theme="dark"] {
 	--bg: #0c1218;
 	--bg-card: #141c24;
 	--bg-card-hover: #1a2530;
@@ -10,6 +11,37 @@
 	--warn: #e8b060;
 	--error: #e87070;
 	--unsynced: #6a7a80;
+	--viz-bg: #050807;
+	--viz-well: rgba(0, 0, 0, 0.35);
+	--knob-face-a: #243038;
+	--knob-face-b: #141c24;
+	--overlay: rgba(6, 10, 14, 0.78);
+	--surface-tint: rgba(0, 0, 0, 0.14);
+	--header-tint: rgba(94, 207, 184, 0.06);
+	--btn-on-accent: #fff;
+}
+
+[data-theme="light"] {
+	--bg: #dfe8e6;
+	--bg-card: #f3f7f6;
+	--bg-card-hover: #e8f0ee;
+	--border: rgba(35, 70, 65, 0.16);
+	--text: #152422;
+	--text-muted: #4d635e;
+	--accent: #1a8f78;
+	--accent-dim: #147a66;
+	--warn: #a86b12;
+	--error: #c04545;
+	--unsynced: #6a7c78;
+	/* Keep plots as dark insets so neon strokes stay readable on light UI */
+	--viz-bg: #0c1412;
+	--viz-well: #101816;
+	--knob-face-a: #e4eeeb;
+	--knob-face-b: #c9d8d3;
+	--overlay: rgba(18, 28, 26, 0.5);
+	--surface-tint: rgba(20, 40, 36, 0.05);
+	--header-tint: rgba(26, 143, 120, 0.08);
+	--btn-on-accent: #fff;
 }
 
 *,
@@ -167,7 +199,7 @@ body {
 .btn-primary {
 	background: var(--accent-dim);
 	border-color: var(--accent);
-	color: #fff;
+	color: var(--btn-on-accent);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -311,7 +343,7 @@ body {
 	width: 100%;
 	height: 100%;
 	border-radius: 4px;
-	background: #050807;
+	background: var(--viz-bg);
 }
 
 .section-viz-stack {
@@ -364,9 +396,15 @@ body {
 	width: 100%;
 	height: auto;
 	display: block;
-	background: rgba(0, 0, 0, 0.35);
+	background: var(--viz-well);
 	border-radius: 6px;
 	border: 1px solid var(--border);
+}
+
+[data-theme="light"] .viz-canvas,
+[data-theme="light"] .viz-canvas--scope {
+	border-color: rgba(20, 50, 45, 0.35);
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 .sections-grid {
@@ -409,7 +447,7 @@ body {
 .section-card-header {
 	padding: 0.4rem 0.7rem;
 	border-bottom: 1px solid var(--border);
-	background: rgba(94, 207, 184, 0.06);
+	background: var(--header-tint);
 }
 
 .section-card-header h2 {
@@ -540,7 +578,7 @@ body {
 	inset: 0;
 	border-radius: 50%;
 	border: 2px solid var(--border);
-	background: radial-gradient(circle at 35% 30%, #243038, #141c24);
+	background: radial-gradient(circle at 35% 30%, var(--knob-face-a), var(--knob-face-b));
 }
 
 .knob-pointer {
@@ -689,7 +727,7 @@ body {
 	align-items: center;
 	justify-content: center;
 	padding: 0.75rem;
-	background: rgba(6, 10, 14, 0.78);
+	background: var(--overlay);
 	overflow: hidden;
 }
 
@@ -740,7 +778,7 @@ body {
 	padding: 0.75rem 1.35rem;
 	border-bottom: 1px solid var(--border);
 	flex-shrink: 0;
-	background: rgba(0, 0, 0, 0.18);
+	background: var(--surface-tint);
 }
 
 .ref-search input {
@@ -771,7 +809,7 @@ body {
 	padding: 0.85rem 0.75rem 1.1rem 1rem;
 	border-right: 1px solid var(--border);
 	overflow: auto;
-	background: rgba(0, 0, 0, 0.12);
+	background: var(--surface-tint);
 }
 
 .ref-toc-label {

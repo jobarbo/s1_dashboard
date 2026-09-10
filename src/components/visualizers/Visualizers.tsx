@@ -22,6 +22,7 @@ import {
 import {midiClockBpm} from "../../lib/midi-clock";
 import {getSharedLfoPhase, nudgeSharedLfoPhase, resetSharedLfoPhase, setSharedLfoRateHz} from "../../lib/lfo-runtime";
 import {useVizFillSize} from "./viz-sizes";
+import {filterAdsrOverlay, getVizPalette} from "../../lib/viz-theme";
 
 interface OscVisualizerProps {
 	square: number;
@@ -56,7 +57,8 @@ export function OscVisualizer({square, saw, sub, noise, pulseWidth, drawMode, su
 			const w = canvas.width;
 			const h = canvas.height;
 			ctx.clearRect(0, 0, w, h);
-			ctx.strokeStyle = "rgba(230, 245, 240, 0.9)";
+			const viz = getVizPalette();
+			ctx.strokeStyle = viz.wave;
 			ctx.lineWidth = compact ? 1 : 1.5;
 			ctx.beginPath();
 
@@ -254,7 +256,8 @@ export function LfoVisualizer({
 
 			const phaseNow = getSharedLfoPhase(now);
 
-			ctx.strokeStyle = "rgba(120, 210, 190, 0.95)";
+			const viz = getVizPalette();
+			ctx.strokeStyle = viz.lfo;
 			ctx.lineWidth = compact ? 1 : 1.5;
 			ctx.beginPath();
 
@@ -269,7 +272,7 @@ export function LfoVisualizer({
 			ctx.stroke();
 
 			const nowY = h / 2 - sampleWaveform(wf, phaseNow, pw) * (h * 0.38);
-			ctx.fillStyle = "rgba(160, 255, 220, 0.95)";
+			ctx.fillStyle = viz.lfoDot;
 			ctx.beginPath();
 			ctx.arc(w - 2.5, nowY, compact ? 2.2 : 3, 0, Math.PI * 2);
 			ctx.fill();
@@ -342,6 +345,7 @@ function strokeFilterCurve(ctx: CanvasRenderingContext2D, w: number, h: number, 
 function fillSpectrum(ctx: CanvasRenderingContext2D, w: number, h: number, bins: Uint8Array, gain: number) {
 	const last = bins.length - 1;
 	const ys = new Float32Array(w);
+	const viz = getVizPalette();
 	for (let x = 0; x < w; x++) {
 		const startF = filterFreqNormAtX(x, w) * last;
 		const endF = filterFreqNormAtX(Math.min(w - 1, x + 1), w) * last;
@@ -361,26 +365,19 @@ function fillSpectrum(ctx: CanvasRenderingContext2D, w: number, h: number, bins:
 	ctx.lineTo(w - 1, h);
 	ctx.closePath();
 	const grad = ctx.createLinearGradient(0, 0, 0, h);
-	grad.addColorStop(0, "rgba(110, 230, 200, 0.85)");
-	grad.addColorStop(0.4, "rgba(94, 207, 184, 0.55)");
-	grad.addColorStop(1, "rgba(94, 207, 184, 0.12)");
+	grad.addColorStop(0, viz.spectrum[0]);
+	grad.addColorStop(0.4, viz.spectrum[1]);
+	grad.addColorStop(1, viz.spectrum[2]);
 	ctx.fillStyle = grad;
 	ctx.fill();
 
 	ctx.beginPath();
 	ctx.moveTo(0, ys[0]);
 	for (let x = 1; x < w; x++) ctx.lineTo(x, ys[x]);
-	ctx.strokeStyle = "rgba(140, 255, 220, 0.95)";
+	ctx.strokeStyle = viz.spectrumStroke;
 	ctx.lineWidth = 1.25;
 	ctx.stroke();
 }
-
-const FILTER_ADSR_OVERLAY = {
-	attack: {color: "rgb(110, 190, 255)", dash: [5, 3] as number[]},
-	decay: {color: "rgb(186, 140, 255)", dash: [3, 3] as number[]},
-	sustain: {color: "rgb(255, 214, 90)", dash: [7, 4] as number[]},
-	release: {color: "rgb(255, 120, 165)", dash: [2, 3] as number[]},
-} as const;
 
 /** Time overlay: A, D, S, R left to right. CC 0 = vertical; low CC stays nearly vertical. */
 function adsrTimeSegmentWidths(width: number, attackCc: number, decayCc: number, releaseCc: number): {attack: number; decay: number; sustain: number; release: number} {
@@ -447,20 +444,21 @@ function drawAdsrTimeOverlay(
 	const x3 = x2 + sW;
 	const x4 = x3 + rW;
 
-	strokeDashedSegment(ctx, x0, baseY, x1, peakY, FILTER_ADSR_OVERLAY.attack.color, FILTER_ADSR_OVERLAY.attack.dash, compact);
-	strokeDashedSegment(ctx, x1, peakY, x2, sustainY, FILTER_ADSR_OVERLAY.decay.color, FILTER_ADSR_OVERLAY.decay.dash, compact);
-	strokeDashedSegment(ctx, x2, sustainY, x3, sustainY, FILTER_ADSR_OVERLAY.sustain.color, FILTER_ADSR_OVERLAY.sustain.dash, compact);
-	strokeDashedSegment(ctx, x3, sustainY, x4, baseY, FILTER_ADSR_OVERLAY.release.color, FILTER_ADSR_OVERLAY.release.dash, compact);
+	const overlay = filterAdsrOverlay();
+	strokeDashedSegment(ctx, x0, baseY, x1, peakY, overlay.attack.color, overlay.attack.dash, compact);
+	strokeDashedSegment(ctx, x1, peakY, x2, sustainY, overlay.decay.color, overlay.decay.dash, compact);
+	strokeDashedSegment(ctx, x2, sustainY, x3, sustainY, overlay.sustain.color, overlay.sustain.dash, compact);
+	strokeDashedSegment(ctx, x3, sustainY, x4, baseY, overlay.release.color, overlay.release.dash, compact);
 
 	const font = compact ? 9 : 11;
 	ctx.font = `${font}px system-ui, sans-serif`;
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
 	const labels = [
-		[aW < 8 ? x1 + 7 : (x0 + x1) / 2, (baseY + peakY) / 2, "A", FILTER_ADSR_OVERLAY.attack.color],
-		[dW < 8 ? x2 + 7 : (x1 + x2) / 2, (peakY + sustainY) / 2, "D", FILTER_ADSR_OVERLAY.decay.color],
-		[(x2 + x3) / 2, sustainY - 8, "S", FILTER_ADSR_OVERLAY.sustain.color],
-		[rW < 8 ? x3 - 7 : (x3 + x4) / 2, (sustainY + baseY) / 2, "R", FILTER_ADSR_OVERLAY.release.color],
+		[aW < 8 ? x1 + 7 : (x0 + x1) / 2, (baseY + peakY) / 2, "A", overlay.attack.color],
+		[dW < 8 ? x2 + 7 : (x1 + x2) / 2, (peakY + sustainY) / 2, "D", overlay.decay.color],
+		[(x2 + x3) / 2, sustainY - 8, "S", overlay.sustain.color],
+		[rW < 8 ? x3 - 7 : (x3 + x4) / 2, (sustainY + baseY) / 2, "R", overlay.release.color],
 	] as const;
 	for (const [x, y, label, color] of labels) {
 		ctx.fillStyle = color;
@@ -532,6 +530,8 @@ export function FilterVisualizer({
 				fillSpectrum(ctx, w, h, bins, specGainRef.current);
 			}
 
+			const viz = getVizPalette();
+
 			// Resonance glow stays on the static cutoff (avoids heavy saccades).
 			if (resonance > 3) {
 				ctx.beginPath();
@@ -545,9 +545,9 @@ export function FilterVisualizer({
 				}
 				ctx.closePath();
 				const glow = ctx.createLinearGradient(0, 0, 0, h);
-				glow.addColorStop(0, "rgba(255, 140, 90, 0.45)");
-				glow.addColorStop(0.55, "rgba(255, 170, 110, 0.16)");
-				glow.addColorStop(1, "rgba(255, 190, 120, 0.02)");
+				glow.addColorStop(0, viz.filterGlow[0]);
+				glow.addColorStop(0.55, viz.filterGlow[1]);
+				glow.addColorStop(1, viz.filterGlow[2]);
 				ctx.fillStyle = glow;
 				ctx.fill();
 			}
@@ -563,20 +563,20 @@ export function FilterVisualizer({
 					ctx.lineTo(x, filterCurveY(h, w, x, cutoff, resonance));
 				}
 				ctx.closePath();
-				ctx.fillStyle = "rgba(255, 190, 120, 0.14)";
+				ctx.fillStyle = viz.filterFill;
 				ctx.fill();
 			}
 
 			// Base cutoff — solid orange.
 			ctx.setLineDash([]);
-			ctx.strokeStyle = "rgba(255, 190, 120, 0.95)";
+			ctx.strokeStyle = viz.filter;
 			ctx.lineWidth = compact ? 1.25 : 2;
 			strokeFilterCurve(ctx, w, h, cutoff, resonance);
 
 			// Filter LFO — dashed violet, driven by shared LFO phase/rate.
 			if (showLfo) {
 				ctx.setLineDash([6, 4]);
-				ctx.strokeStyle = "rgba(186, 140, 255, 0.92)";
+				ctx.strokeStyle = viz.filterLfo;
 				ctx.lineWidth = compact ? 1.5 : 2;
 				strokeFilterCurve(ctx, w, h, liveCutoff, resonance);
 				ctx.setLineDash([]);
@@ -593,19 +593,19 @@ export function FilterVisualizer({
 				ctx.font = `${compact ? 8 : 10}px system-ui, sans-serif`;
 				ctx.textAlign = "left";
 				ctx.textBaseline = "bottom";
-				ctx.fillStyle = "rgba(186, 140, 255, 0.75)";
+				ctx.fillStyle = viz.filterLfoLabel;
 				ctx.fillText("LFO", Math.min(w - 24, lfoPeakX + 4), Math.max(10, lfoPeakY - 1));
 			}
 
 			if (showEnv) {
 				ctx.setLineDash([7, 4]);
 				ctx.lineWidth = compact ? 1.75 : 2.25;
-				ctx.strokeStyle = "rgba(255, 252, 235, 0.38)";
+				ctx.strokeStyle = viz.filterEnv;
 				strokeFilterCurve(ctx, w, h, peakCutoff, resonance);
 				if (Math.abs(sustainCutoff - peakCutoff) > 2 && Math.abs(sustainCutoff - cutoff) > 2) {
 					ctx.setLineDash([3, 4]);
 					ctx.lineWidth = compact ? 1.25 : 1.6;
-					ctx.strokeStyle = "rgba(255, 230, 190, 0.28)";
+					ctx.strokeStyle = viz.filterEnvSoft;
 					strokeFilterCurve(ctx, w, h, sustainCutoff, resonance);
 				}
 				ctx.setLineDash([]);
@@ -622,7 +622,7 @@ export function FilterVisualizer({
 				ctx.font = `${compact ? 8 : 10}px system-ui, sans-serif`;
 				ctx.textAlign = "left";
 				ctx.textBaseline = "bottom";
-				ctx.fillStyle = "rgba(255, 252, 235, 0.4)";
+				ctx.fillStyle = viz.envLabel;
 				ctx.fillText("ENV", Math.min(w - 22, envPeakX + 4), Math.max(10, envPeakY - 1));
 			}
 
@@ -728,11 +728,13 @@ export function AdsrVisualizer({attack, decay, sustain, release, analyser = null
 			const x4 = x3 + rW;
 
 			const yEnv = (level: number) => midY - level * halfH;
+			const overlay = filterAdsrOverlay();
+			const viz = getVizPalette();
 			const segs = [
-				{xA: x0, xB: x1, yA: yEnv(0), yB: yEnv(1), w: aW, ...FILTER_ADSR_OVERLAY.attack, label: "A"},
-				{xA: x1, xB: x2, yA: yEnv(1), yB: yEnv(sustainN), w: dW, ...FILTER_ADSR_OVERLAY.decay, label: "D"},
-				{xA: x2, xB: x3, yA: yEnv(sustainN), yB: yEnv(sustainN), w: sW, ...FILTER_ADSR_OVERLAY.sustain, label: "S"},
-				{xA: x3, xB: x4, yA: yEnv(sustainN), yB: yEnv(0), w: rW, ...FILTER_ADSR_OVERLAY.release, label: "R"},
+				{xA: x0, xB: x1, yA: yEnv(0), yB: yEnv(1), w: aW, ...overlay.attack, label: "A"},
+				{xA: x1, xB: x2, yA: yEnv(1), yB: yEnv(sustainN), w: dW, ...overlay.decay, label: "D"},
+				{xA: x2, xB: x3, yA: yEnv(sustainN), yB: yEnv(sustainN), w: sW, ...overlay.sustain, label: "S"},
+				{xA: x3, xB: x4, yA: yEnv(sustainN), yB: yEnv(0), w: rW, ...overlay.release, label: "R"},
 			];
 
 			const envAt = (x: number) => adsrLevelAtX(x, x0, x1, x2, x3, x4, sustainN);
@@ -777,7 +779,7 @@ export function AdsrVisualizer({attack, decay, sustain, release, analyser = null
 				// USB float peaks are often ~0.05–0.15 at "full" S-1 level.
 				const fixedGain = 10;
 
-				ctx.strokeStyle = "rgb(140, 255, 220)";
+				ctx.strokeStyle = viz.ampTone;
 				ctx.lineWidth = compact ? 1.15 : 1.4;
 				ctx.beginPath();
 				for (let x = 0; x < w; x++) {
@@ -789,7 +791,7 @@ export function AdsrVisualizer({attack, decay, sustain, release, analyser = null
 				}
 				ctx.stroke();
 			} else {
-				ctx.strokeStyle = "rgba(230, 245, 240, 0.92)";
+				ctx.strokeStyle = viz.ampWave;
 				ctx.lineWidth = compact ? 1 : 1.25;
 				ctx.beginPath();
 				for (let x = 0; x < w; x++) {

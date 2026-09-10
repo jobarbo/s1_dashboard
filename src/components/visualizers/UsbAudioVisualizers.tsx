@@ -1,4 +1,5 @@
 import {useEffect, useRef} from "react";
+import {getVizPalette} from "../../lib/viz-theme";
 
 interface UsbAudioWaveformProps {
 	analyser: AnalyserNode | null;
@@ -37,7 +38,8 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 		const drawGrid = (w: number, h: number, dpr: number) => {
 			const midY = h / 2;
-			ctx.strokeStyle = "rgba(94, 207, 184, 0.12)";
+			const viz = getVizPalette();
+			ctx.strokeStyle = viz.grid;
 			ctx.lineWidth = dpr;
 
 			for (const t of [-1, -0.5, 0, 0.5, 1]) {
@@ -57,7 +59,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 				ctx.stroke();
 			}
 
-			ctx.strokeStyle = "rgba(94, 207, 184, 0.28)";
+			ctx.strokeStyle = viz.gridMid;
 			ctx.beginPath();
 			ctx.moveTo(0, midY);
 			ctx.lineTo(w, midY);
@@ -122,9 +124,10 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 				const gain = gated ? 0.92 / windowPeak : 0.92 / (openAt * 4);
 
+				const viz = getVizPalette();
 				ctx.lineWidth = Math.max(1.5, dpr * 1.25);
-				ctx.strokeStyle = "rgb(110, 230, 200)";
-				ctx.shadowColor = "rgba(94, 207, 184, 0.55)";
+				ctx.strokeStyle = viz.glow;
+				ctx.shadowColor = viz.shadow;
 				ctx.shadowBlur = 6 * dpr;
 				ctx.beginPath();
 
