@@ -773,8 +773,7 @@ body {
 
 .ref-modal {
 	width: min(72rem, 100%);
-	height: min(92dvh, 56rem);
-	max-height: min(92dvh, 56rem);
+	height: 92dvh;
 	margin: 0;
 	border: 1px solid var(--border);
 	border-radius: 12px;
