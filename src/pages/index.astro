@@ -9,8 +9,14 @@ import '../styles/editor.css';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Visual web editor for the Roland AIRA Compact S-1 synthesizer over USB MIDI." />
+    <meta name="theme-color" content="#0c1218" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="S-1 Editor" />
     <title>Roland S-1 Web Editor</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
     <script is:inline>
       (function () {
         try {
@@ -39,5 +45,16 @@ import '../styles/editor.css';
   </head>
   <body>
     <Editor client:only="react" />
+    <script is:inline>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          var isLocal =
+            location.hostname === "localhost" ||
+            location.hostname === "127.0.0.1";
+          if (isLocal) return;
+          navigator.serviceWorker.register("/sw.js").catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>

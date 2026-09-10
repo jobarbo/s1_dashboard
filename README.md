@@ -6,7 +6,7 @@ Not affiliated with Roland Corporation.
 
 ## Requirements
 
-- **Browser:** Chrome or Edge (Web MIDI API). Safari is not supported.
+- **Browser:** Chrome or Edge (Web MIDI API). Safari is not supported for MIDI.
 - **Cable:** USB-C data cable (not charge-only).
 - **Synth:** Roland S-1 on default MIDI channel **3** for CCs.
 
@@ -30,10 +30,20 @@ Open `http://localhost:4321` in Chrome.
 - All **54 MIDI CC** parameters from the official S-1 implementation chart
 - Section cards: LFO, Oscillator, Filter, Envelope, Effects, Voice, Controls
 - **Unsynced (`?`)** indicators until values are confirmed from hardware or Send All
-- Heuristic **osc mix, LFO, filter curve, and ADSR** visualizers
-- On-screen keyboard for auditioning on channel 3
-- **Send All**, **Panic**, localStorage for last UI values
+- Heuristic **osc mix, LFO, filter curve, and ADSR** visualizers + USB oscilloscope
+- **Speaker monitor** — hear the S-1 USB audio in the page (header speaker icon)
+- **Patch snapshots** (local library + JSON import/export)
+- **Tempo badge** from MIDI clock (BPM + beat pulse)
+- Hardware **reference wiki** + Getting started checklist
+- **Send All**, **Panic**, theme + language toggles, localStorage for last UI values
 - **Mock MIDI** for development without hardware
+- **PWA** installable in production builds (`npm run build && npm run preview`)
+
+### Limits
+
+- CC-only — no SysEx, no `.PRM` writing
+- iOS/Safari: no Web MIDI; PWA install may work but MIDI will not
+- Service worker registers only outside localhost
 
 ## Build
 

@@ -14,6 +14,7 @@ export interface UsbAudioSession {
   context: AudioContext;
   analysers: UsbAudioAnalysers;
   stream: MediaStream;
+  setMonitorEnabled: (on: boolean) => void;
   stop: () => void;
 }
 
@@ -79,16 +80,27 @@ export async function startUsbAudioCapture(deviceId?: string): Promise<UsbAudioS
   spectrum.minDecibels = -78;
   spectrum.maxDecibels = -12;
 
+  // Monitor path — muted by default; speaker toggle opens this to the page speakers.
+  const monitor = context.createGain();
+  monitor.gain.value = 0;
+
   const source = context.createMediaStreamSource(stream);
   source.connect(waveform);
   source.connect(spectrum);
+  source.connect(monitor);
+  monitor.connect(context.destination);
 
   return {
     context,
     analysers: { waveform, spectrum },
     stream,
+    setMonitorEnabled: (on: boolean) => {
+      monitor.gain.value = on ? 1 : 0;
+    },
     stop: () => {
+      monitor.gain.value = 0;
       source.disconnect();
+      monitor.disconnect();
       stream.getTracks().forEach((t) => t.stop());
       void context.close();
     },

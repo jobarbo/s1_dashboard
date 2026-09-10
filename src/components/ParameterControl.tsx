@@ -136,14 +136,24 @@ function ParamCluster({
       {settings.length > 0 && (
         <div className="param-settings">
           {settings.map((state) => (
-            <ParameterControl key={state.def.id} state={state} disabled={disabled} onChange={onChange} />
+            <ParameterControl
+              key={state.def.id}
+              state={state}
+              disabled={disabled}
+              onChange={onChange}
+            />
           ))}
         </div>
       )}
       {knobs.length > 0 && (
         <div className="param-knob-row">
           {knobs.map((state) => (
-            <ParameterControl key={state.def.id} state={state} disabled={disabled} onChange={onChange} />
+            <ParameterControl
+              key={state.def.id}
+              state={state}
+              disabled={disabled}
+              onChange={onChange}
+            />
           ))}
         </div>
       )}
@@ -160,7 +170,19 @@ export function ParameterGrid({
   disabled?: boolean;
   onChange: (id: string, value: number) => void;
 }) {
-  const { settings, knobs, groupOrder, grouped } = layoutParams(params);
+  const polyphony = params.find((p) => p.def.id === "polyphony");
+  const chordMode =
+    polyphony?.def.options != null &&
+    ccToOptionIndex(polyphony.value, polyphony.def.options.length) ===
+      polyphony.def.options.indexOf("Chord");
+
+  const visible = params.filter((p) => {
+    if (p.def.hideInUi) return false;
+    if (p.def.group === "Chord" && !chordMode) return false;
+    return true;
+  });
+
+  const { settings, knobs, groupOrder, grouped } = layoutParams(visible);
 
   return (
     <div className="param-panel">
