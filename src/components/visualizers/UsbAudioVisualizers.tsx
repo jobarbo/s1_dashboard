@@ -2,6 +2,19 @@ import {useEffect, useRef} from "react";
 import {useI18n} from "../../lib/use-i18n";
 import {getVizPalette} from "../../lib/viz-theme";
 
+/** Vertical scale in S-1 pot / display units (−255…255). */
+const AXIS = 255;
+/**
+ * Fixed display gain (not auto-scale). Soft-tanh keeps loud main-volume peaks
+ * inside ±255 so the wave is never lost past the rails.
+ */
+const SCOPE_GAIN = 70;
+
+/** Map float sample → display units inside ±AXIS without hard clipping. */
+function toScopeUnits(sample: number): number {
+	return AXIS * Math.tanh(sample * SCOPE_GAIN);
+}
+
 interface UsbAudioWaveformProps {
 	analyser: AnalyserNode | null;
 	active?: boolean;
@@ -22,8 +35,6 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 		const buffer = analyser ? new Float32Array(analyser.fftSize) : null;
 		const triggerFloor = 0.0004;
-		let noiseFloor = 0.001;
-		let gated = false;
 
 		const syncSize = () => {
 			const cssW = Math.max(80, Math.floor(wrap.clientWidth));
@@ -38,23 +49,22 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 			return {w, h, dpr};
 		};
 
-		const drawGrid = (w: number, h: number, dpr: number) => {
-			const midY = h / 2;
+		const drawGrid = (w: number, h: number, dpr: number, padL: number, halfH: number, midY: number) => {
 			const viz = getVizPalette();
 			ctx.strokeStyle = viz.grid;
 			ctx.lineWidth = dpr;
 
 			for (const t of [-1, -0.5, 0, 0.5, 1]) {
-				const y = midY - t * (h * 0.48);
+				const y = midY - t * halfH;
 				ctx.beginPath();
-				ctx.moveTo(0, y);
+				ctx.moveTo(padL, y);
 				ctx.lineTo(w, y);
 				ctx.stroke();
 			}
 
 			const cols = 10;
 			for (let i = 1; i < cols; i++) {
-				const x = (i / cols) * w;
+				const x = padL + (i / cols) * (w - padL);
 				ctx.beginPath();
 				ctx.moveTo(x, 0);
 				ctx.lineTo(x, h);
@@ -63,9 +73,19 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 			ctx.strokeStyle = viz.gridMid;
 			ctx.beginPath();
-			ctx.moveTo(0, midY);
+			ctx.moveTo(padL, midY);
 			ctx.lineTo(w, midY);
 			ctx.stroke();
+
+			ctx.fillStyle = viz.envLabel;
+			ctx.font = `${Math.max(9, 10 * dpr)}px ui-monospace, monospace`;
+			ctx.textAlign = "right";
+			ctx.textBaseline = "middle";
+			ctx.fillText("255", padL - 4 * dpr, midY - halfH);
+			ctx.fillText("128", padL - 4 * dpr, midY - halfH * 0.5);
+			ctx.fillText("0", padL - 4 * dpr, midY);
+			ctx.fillText("-128", padL - 4 * dpr, midY + halfH * 0.5);
+			ctx.fillText("-255", padL - 4 * dpr, midY + halfH);
 		};
 
 		const findTrigger = (peak: number): number => {
@@ -83,11 +103,14 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 		const draw = () => {
 			const {w, h, dpr} = syncSize();
+			const padL = Math.round(32 * dpr);
 			const midY = h / 2;
 			const halfH = h * 0.48;
+			const plotW = Math.max(1, w - padL);
+
 			ctx.clearRect(0, 0, w, h);
 			ctx.imageSmoothingEnabled = false;
-			drawGrid(w, h, dpr);
+			drawGrid(w, h, dpr, padL, halfH, midY);
 
 			if (analyser && active && buffer) {
 				analyser.getFloatTimeDomainData(buffer);
@@ -103,29 +126,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 				const maxStart = buffer.length - windowSamples;
 				const start = Math.min(trigger, maxStart);
 
-				let windowPeak = 0;
-				for (let i = 0; i < windowSamples; i++) {
-					const abs = Math.abs(buffer[start + i]);
-					if (abs > windowPeak) windowPeak = abs;
-				}
-
-				if (windowPeak < noiseFloor * 1.4) {
-					noiseFloor += (windowPeak - noiseFloor) * 0.08;
-				} else if (!gated) {
-					noiseFloor += (Math.min(windowPeak, noiseFloor * 1.05) - noiseFloor) * 0.01;
-				}
-				noiseFloor = Math.max(1e-5, noiseFloor);
-
-				const openAt = noiseFloor * 10;
-				const closeAt = noiseFloor * 4;
-				if (gated) {
-					if (windowPeak < closeAt) gated = false;
-				} else if (windowPeak > openAt) {
-					gated = true;
-				}
-
-				const gain = gated ? 0.92 / windowPeak : 0.92 / (openAt * 4);
-
+				// Fixed gain + soft limit: loud volume compresses into ±255 instead of vanishing off-axis.
 				const viz = getVizPalette();
 				ctx.lineWidth = Math.max(1.5, dpr * 1.25);
 				ctx.strokeStyle = viz.glow;
@@ -133,12 +134,13 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 				ctx.shadowBlur = 6 * dpr;
 				ctx.beginPath();
 
-				for (let x = 0; x < w; x++) {
-					const i = start + Math.floor((x / w) * windowSamples);
-					const sample = buffer[i] * gain;
-					const y = midY - sample * halfH;
-					if (x === 0) ctx.moveTo(x + 0.5, y);
-					else ctx.lineTo(x + 0.5, y);
+				for (let x = 0; x < plotW; x++) {
+					const i = start + Math.floor((x / plotW) * windowSamples);
+					const sample = toScopeUnits(buffer[i]);
+					const y = midY - (sample / AXIS) * halfH;
+					const px = padL + x + 0.5;
+					if (x === 0) ctx.moveTo(px, y);
+					else ctx.lineTo(px, y);
 				}
 				ctx.stroke();
 				ctx.shadowBlur = 0;
