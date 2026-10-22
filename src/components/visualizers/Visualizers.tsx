@@ -453,7 +453,7 @@ function drawAdsrTimeOverlay(
 	strokeDashedSegment(ctx, x3, sustainY, x4, baseY, overlay.release.color, overlay.release.dash, compact);
 
 	const font = compact ? 9 : 11;
-	ctx.font = `${font}px system-ui, sans-serif`;
+	ctx.font = `${font}px "IBM Plex Mono", ui-monospace, monospace`;
 	ctx.textAlign = "center";
 	ctx.textBaseline = "middle";
 	const labels = [
@@ -593,7 +593,7 @@ export function FilterVisualizer({
 						lfoPeakX = x;
 					}
 				}
-				ctx.font = `${compact ? 8 : 10}px system-ui, sans-serif`;
+				ctx.font = `${compact ? 8 : 10}px "IBM Plex Mono", ui-monospace, monospace`;
 				ctx.textAlign = "left";
 				ctx.textBaseline = "bottom";
 				ctx.fillStyle = viz.filterLfoLabel;
@@ -622,7 +622,7 @@ export function FilterVisualizer({
 						envPeakX = x;
 					}
 				}
-				ctx.font = `${compact ? 8 : 10}px system-ui, sans-serif`;
+				ctx.font = `${compact ? 8 : 10}px "IBM Plex Mono", ui-monospace, monospace`;
 				ctx.textAlign = "left";
 				ctx.textBaseline = "bottom";
 				ctx.fillStyle = viz.envLabel;
@@ -809,7 +809,7 @@ export function AdsrVisualizer({attack, decay, sustain, release, analyser = null
 			}
 
 			const font = compact ? 9 : 11;
-			ctx.font = `${font}px system-ui, sans-serif`;
+			ctx.font = `${font}px "IBM Plex Mono", ui-monospace, monospace`;
 			ctx.textAlign = "center";
 			ctx.textBaseline = "bottom";
 			for (const seg of segs) {

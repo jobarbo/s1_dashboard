@@ -2,18 +2,15 @@ import {useEffect, useRef} from "react";
 import {useI18n} from "../../lib/use-i18n";
 import {getVizPalette} from "../../lib/viz-theme";
 
-/** Vertical scale in S-1 pot / display units (−255…255). */
-const AXIS = 255;
 /**
- * Fixed display gain (not auto-scale). Soft-tanh keeps loud main-volume peaks
- * inside ±255 so the wave is never lost past the rails.
+ * Auto-normalized display: the loudest sample in the buffer maps to this
+ * fraction of the axis, whatever the S-1 volume, so the trace never clips.
  */
-const SCOPE_GAIN = 70;
-
-/** Map float sample → display units inside ±AXIS without hard clipping. */
-function toScopeUnits(sample: number): number {
-	return AXIS * Math.tanh(sample * SCOPE_GAIN);
-}
+const SCOPE_HEADROOM = 0.9;
+/** Reference peak floor — keeps silence / noise from being blown up full-scale. */
+const SCOPE_MIN_PEAK = 0.003;
+/** Per-frame decay of the tracked peak (~1 s to settle after a level drop). */
+const SCOPE_PEAK_RELEASE = 0.96;
 
 interface UsbAudioWaveformProps {
 	analyser: AnalyserNode | null;
@@ -35,6 +32,8 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 		const buffer = analyser ? new Float32Array(analyser.fftSize) : null;
 		const triggerFloor = 0.0004;
+		// Tracked peak: jumps up instantly (no clipping), releases slowly (no pumping).
+		let refPeak = SCOPE_MIN_PEAK;
 
 		const syncSize = () => {
 			const cssW = Math.max(80, Math.floor(wrap.clientWidth));
@@ -78,7 +77,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 			ctx.stroke();
 
 			ctx.fillStyle = viz.envLabel;
-			ctx.font = `${Math.max(9, 10 * dpr)}px ui-monospace, monospace`;
+			ctx.font = `${Math.max(9, 10 * dpr)}px "IBM Plex Mono", ui-monospace, monospace`;
 			ctx.textAlign = "right";
 			ctx.textBaseline = "middle";
 			ctx.fillText("255", padL - 4 * dpr, midY - halfH);
@@ -126,7 +125,9 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 				const maxStart = buffer.length - windowSamples;
 				const start = Math.min(trigger, maxStart);
 
-				// Fixed gain + soft limit: loud volume compresses into ±255 instead of vanishing off-axis.
+				refPeak = Math.max(peak, SCOPE_MIN_PEAK, refPeak * SCOPE_PEAK_RELEASE);
+				const gain = SCOPE_HEADROOM / refPeak;
+
 				const viz = getVizPalette();
 				ctx.lineWidth = Math.max(1.5, dpr * 1.25);
 				ctx.strokeStyle = viz.glow;
@@ -136,8 +137,8 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 
 				for (let x = 0; x < plotW; x++) {
 					const i = start + Math.floor((x / plotW) * windowSamples);
-					const sample = toScopeUnits(buffer[i]);
-					const y = midY - (sample / AXIS) * halfH;
+					const norm = Math.max(-1, Math.min(1, buffer[i] * gain));
+					const y = midY - norm * halfH;
 					const px = padL + x + 0.5;
 					if (x === 0) ctx.moveTo(px, y);
 					else ctx.lineTo(px, y);

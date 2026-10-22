@@ -31,6 +31,9 @@ const en = {
 	audioIn: "Audio in",
 	autoDetectS1: "Auto-detect S-1",
 	mockMidi: "Mock MIDI",
+	offline: "Offline",
+	portAuto: "auto",
+	connectionSettings: "Connection settings",
 
 	connect: "Connect",
 	connecting: "Connecting…",
@@ -166,6 +169,9 @@ const fr: {[K in keyof typeof en]: string} = {
 	audioIn: "Audio in",
 	autoDetectS1: "Détection auto S-1",
 	mockMidi: "MIDI simulé",
+	offline: "Hors ligne",
+	portAuto: "auto",
+	connectionSettings: "Réglages de connexion",
 
 	connect: "Connecter",
 	connecting: "Connexion…",

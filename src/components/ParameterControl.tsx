@@ -12,10 +12,11 @@ import { Knob } from "./Knob";
 interface ParameterControlProps {
   state: ParameterState;
   disabled?: boolean;
+  colorIndex?: number;
   onChange: (id: string, value: number) => void;
 }
 
-export function ParameterControl({ state, disabled, onChange }: ParameterControlProps) {
+export function ParameterControl({ state, disabled, colorIndex = 0, onChange }: ParameterControlProps) {
   const { def, value, synced } = state;
   const display = formatParameterValue(def, value);
 
@@ -27,6 +28,7 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
         <span className="toggle-row">
           <input
             type="checkbox"
+            className="led-key"
             checked={on}
             disabled={disabled}
             onChange={(e) => onChange(def.id, getCcForToggle(e.target.checked))}
@@ -67,6 +69,8 @@ export function ParameterControl({ state, disabled, onChange }: ParameterControl
       displayValue={display}
       synced={synced}
       disabled={disabled}
+      bipolar={def.type === "bipolar"}
+      colorIndex={colorIndex}
       onChange={(v) => onChange(def.id, v)}
     />
   );
@@ -147,11 +151,12 @@ function ParamCluster({
       )}
       {knobs.length > 0 && (
         <div className="param-knob-row">
-          {knobs.map((state) => (
+          {knobs.map((state, i) => (
             <ParameterControl
               key={state.def.id}
               state={state}
               disabled={disabled}
+              colorIndex={i}
               onChange={onChange}
             />
           ))}

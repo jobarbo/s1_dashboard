@@ -73,6 +73,30 @@ function SpeakerIcon({ muted }: { muted: boolean }) {
   );
 }
 
+const KEY_ICON_PATHS = {
+  setup: "M4 7h10M18 7h2M4 17h4M12 17h8M14 4v6M8 14v6",
+  connect: "M9 7V3M15 7V3M6 7h12v4a6 6 0 0 1-12 0V7zM12 17v4",
+  note: "M9 18V5l10-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM19 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+  send: "M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4",
+  init: "M3 12a9 9 0 1 0 3-6.7M3 4v5h5",
+  panic: "M12 8v5M12 16.5v.5M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
+  disconnect: "M5 15h14M12 4l7 8H5l7-8zM5 19h14",
+} as const;
+
+function KeyIcon({ name }: { name: keyof typeof KEY_ICON_PATHS }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d={KEY_ICON_PATHS[name]}
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function Editor() {
   const { t, locale } = useI18n();
   const store = useMemo(() => getStore(), []);
@@ -92,6 +116,7 @@ export default function Editor() {
   const [audioAnalysers, setAudioAnalysers] = useState<UsbAudioAnalysers | null>(null);
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [snapshotsOpen, setSnapshotsOpen] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
   const audioSessionRef = useRef<UsbAudioSession | null>(null);
 
   useEffect(() => {
@@ -237,14 +262,33 @@ export default function Editor() {
   const outputLabel = transportInfo
     ? transportInfo.output || t("unknownPort")
     : "";
+  const portLabel = (ports: MidiPortInfo[], id: string) =>
+    ports.find((p) => p.id === id)?.name ?? t("portAuto");
   const speakerLabel = audioMonitor ? t("audioSpeakerOn") : t("audioSpeakerOff");
 
   return (
-    <div className="editor">
+    <div className={`editor${connected ? "" : " is-offline"}`}>
       <header className="editor-header">
         <div className="brand">
-          <h1>{t("appTitle")}</h1>
-          <p className="subtitle">{t("appSubtitle")}</p>
+          <span className="brand-mark" aria-hidden="true">s-1</span>
+          <div className="brand-text">
+            <h1>{t("appTitle")}</h1>
+            <p className="subtitle">{t("appSubtitle")}</p>
+          </div>
+        </div>
+
+        <div className="status-strip">
+          <TempoBadge />
+
+          {!isWebMidiSupported() && (
+            <span className="badge badge-warn">{t("webMidiUnavailable")}</span>
+          )}
+          {noMidiIn && (
+            <span className="badge badge-warn">{t("noMidiInputPort")}</span>
+          )}
+          {connected && unsynced > 0 && (
+            <span className="badge badge-warn">{t("unsyncedCount", { n: unsynced })}</span>
+          )}
         </div>
 
         <div className="header-actions">
@@ -308,25 +352,95 @@ export default function Editor() {
               />
             </svg>
           </button>
+        </div>
+      </header>
 
-          <TempoBadge />
-
-          {!isWebMidiSupported() && (
-            <span className="badge badge-warn">{t("webMidiUnavailable")}</span>
-          )}
-          {connected && transportInfo && (
-            <span className="badge badge-ok">
-              {transportInfo.isMock ? t("mock") : t("live")} · {t("out")}: {outputLabel}
+      <div className="transport-bar">
+        <div className="transport-screen" role="status">
+          <span className="transport-state">
+            <span className={`transport-led${connected ? (transportInfo?.isMock ? " is-mock" : " is-live") : ""}`} />
+            {connected ? (transportInfo?.isMock ? t("mock") : t("live")) : t("offline")}
+          </span>
+          <span className="transport-field">
+            <em>{t("channel")}</em>
+            {String(channel).padStart(2, "0")}
+          </span>
+          <span className="transport-field">
+            <em>{t("out")}</em>
+            {outputLabel || portLabel(midiOutputs, selectedOutputId)}
+          </span>
+          <span className="transport-field">
+            <em>in</em>
+            {transportInfo?.input || portLabel(midiInputs, selectedInputId)}
+          </span>
+          {isAudioInputSupported() && (
+            <span className={`transport-field${audioActive ? " is-on" : ""}`}>
+              <em>usb</em>
+              {audioActive ? "on" : "off"}
             </span>
           )}
-          {audioActive && <span className="badge badge-ok">{t("usbAudioLive")}</span>}
-          {noMidiIn && (
-            <span className="badge badge-warn">{t("noMidiInputPort")}</span>
-          )}
-          {connected && unsynced > 0 && (
-            <span className="badge badge-warn">{t("unsyncedCount", { n: unsynced })}</span>
-          )}
+        </div>
 
+        {!connected && (
+          <button
+            type="button"
+            className={`btn btn-icon${setupOpen ? " btn-icon-active" : ""}`}
+            title={t("connectionSettings")}
+            aria-label={t("connectionSettings")}
+            aria-expanded={setupOpen}
+            aria-controls="transport-setup"
+            onClick={() => setSetupOpen((v) => !v)}
+          >
+            <KeyIcon name="setup" />
+          </button>
+        )}
+
+        <div className="transport-keys">
+          {!connected ? (
+            <button type="button" className="btn btn-primary btn-key" disabled={connecting} onClick={handleConnect}>
+              <KeyIcon name="connect" />
+              {connecting ? t("connecting") : t("connect")}
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn btn-key" onClick={() => store.sendTestNote()}>
+                <KeyIcon name="note" />
+                {t("testNote")}
+              </button>
+              <button
+                type="button"
+                className="btn btn-key"
+                title={t("sendAllTitle")}
+                onClick={() => void store.sendAll()}
+              >
+                <KeyIcon name="send" />
+                {t("sendAll")}
+              </button>
+              <button
+                type="button"
+                className="btn btn-key"
+                title={t("initSquareTitle")}
+                onClick={() => void store.sendInitSquare()}
+              >
+                <KeyIcon name="init" />
+                {t("initSquare")}
+              </button>
+              <span className="transport-sep" aria-hidden="true" />
+              <button type="button" className="btn btn-key btn-panic" onClick={() => store.panic()}>
+                <KeyIcon name="panic" />
+                {t("panic")}
+              </button>
+              <button type="button" className="btn btn-key btn-ghost" onClick={handleDisconnect}>
+                <KeyIcon name="disconnect" />
+                {t("disconnect")}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!connected && setupOpen && (
+        <div className="transport-setup" id="transport-setup">
           <label className="channel-input">
             {t("channel")}
             <input
@@ -338,100 +452,64 @@ export default function Editor() {
               onChange={(e) => store.setChannel(Number(e.target.value))}
             />
           </label>
-
-          {!connected ? (
+          {isWebMidiSupported() && (
             <>
-              {isWebMidiSupported() && (
-                <>
-                  <label className="port-select">
-                    {t("midiOut")}
-                    <select
-                      value={selectedOutputId}
-                      onChange={(e) => setSelectedOutputId(e.target.value)}
-                    >
-                      <option value="">{t("autoDetectS1")}</option>
-                      {midiOutputs.map((port) => (
-                        <option key={port.id} value={port.id}>
-                          {port.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="port-select">
-                    {t("midiIn")}
-                    <select
-                      value={selectedInputId}
-                      onChange={(e) => setSelectedInputId(e.target.value)}
-                    >
-                      <option value="">{t("autoDetectS1")}</option>
-                      {midiInputs.map((port) => (
-                        <option key={port.id} value={port.id}>
-                          {port.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {isAudioInputSupported() && (
-                    <label className="port-select">
-                      {t("audioIn")}
-                      <select
-                        value={selectedAudioId}
-                        onChange={(e) => setSelectedAudioId(e.target.value)}
-                      >
-                        <option value="">{t("autoDetectS1")}</option>
-                        {audioInputs.map((port) => (
-                          <option key={port.deviceId} value={port.deviceId}>
-                            {port.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
-                  <label className="mock-toggle">
-                    {t("mockMidi")}
-                    <input
-                      type="checkbox"
-                      checked={useMock}
-                      onChange={(e) => setUseMock(e.target.checked)}
-                    />
-                  </label>
-                </>
+              <label className="port-select">
+                {t("midiOut")}
+                <select
+                  value={selectedOutputId}
+                  onChange={(e) => setSelectedOutputId(e.target.value)}
+                >
+                  <option value="">{t("autoDetectS1")}</option>
+                  {midiOutputs.map((port) => (
+                    <option key={port.id} value={port.id}>
+                      {port.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="port-select">
+                {t("midiIn")}
+                <select
+                  value={selectedInputId}
+                  onChange={(e) => setSelectedInputId(e.target.value)}
+                >
+                  <option value="">{t("autoDetectS1")}</option>
+                  {midiInputs.map((port) => (
+                    <option key={port.id} value={port.id}>
+                      {port.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {isAudioInputSupported() && (
+                <label className="port-select">
+                  {t("audioIn")}
+                  <select
+                    value={selectedAudioId}
+                    onChange={(e) => setSelectedAudioId(e.target.value)}
+                  >
+                    <option value="">{t("autoDetectS1")}</option>
+                    {audioInputs.map((port) => (
+                      <option key={port.deviceId} value={port.deviceId}>
+                        {port.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               )}
-              <button type="button" className="btn btn-primary" disabled={connecting} onClick={handleConnect}>
-                {connecting ? t("connecting") : t("connect")}
-              </button>
-            </>
-          ) : (
-            <>
-              <button type="button" className="btn" onClick={() => store.sendTestNote()}>
-                {t("testNote")}
-              </button>
-              <button
-                type="button"
-                className="btn"
-                title={t("sendAllTitle")}
-                onClick={() => void store.sendAll()}
-              >
-                {t("sendAll")}
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                title={t("initSquareTitle")}
-                onClick={() => void store.sendInitSquare()}
-              >
-                {t("initSquare")}
-              </button>
-              <button type="button" className="btn" onClick={() => store.panic()}>
-                {t("panic")}
-              </button>
-              <button type="button" className="btn btn-ghost" onClick={handleDisconnect}>
-                {t("disconnect")}
-              </button>
+              <label className="mock-toggle">
+                {t("mockMidi")}
+                <input
+                  type="checkbox"
+                  checked={useMock}
+                  onChange={(e) => setUseMock(e.target.checked)}
+                />
+              </label>
             </>
           )}
         </div>
-      </header>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
       {audioError && <div className="alert alert-error">{audioError}</div>}
@@ -458,7 +536,7 @@ export default function Editor() {
       )}
 
       <div className="dash-top">
-        <SectionCard title={t("oscilloscope")} className="scope-panel">
+        <SectionCard title={t("oscilloscope")} className="scope-panel" index={0} colorIndex={3}>
           <UsbAudioWaveform
             analyser={audioAnalysers?.waveform ?? null}
             active={audioActive}
@@ -467,7 +545,12 @@ export default function Editor() {
 
         <div className="dash-vizs">
           {VIZ_SECTIONS.map((section) => (
-            <SectionCard key={section} title={SECTION_LABELS[section]} className="viz-only-card">
+            <SectionCard
+              key={section}
+              title={SECTION_LABELS[section]}
+              className="viz-only-card"
+              colorIndex={SECTION_ORDER.indexOf(section)}
+            >
               <SectionVisualizer
                 section={section}
                 getVal={getVal}
@@ -481,13 +564,13 @@ export default function Editor() {
       </div>
 
       <div className="sections-grid">
-        {SECTION_ORDER.map((section) => {
+        {SECTION_ORDER.map((section, i) => {
           const defs = getParamsBySection(section);
           const sectionStates = defs
             .map((d) => store.getState(d.id))
             .filter((s): s is NonNullable<typeof s> => s != null);
           return (
-            <SectionCard key={section} title={SECTION_LABELS[section]}>
+            <SectionCard key={section} title={SECTION_LABELS[section]} index={i + 1} colorIndex={i}>
               <ParameterGrid
                 params={sectionStates}
                 disabled={!connected}
