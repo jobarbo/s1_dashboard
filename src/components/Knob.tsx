@@ -15,26 +15,6 @@ interface KnobProps {
 }
 
 const SWEEP = 270;
-const START = -135;
-const R = 15;
-const C = 18;
-
-function polar(deg: number, r = R) {
-  const rad = ((deg - 90) * Math.PI) / 180;
-  return { x: C + r * Math.cos(rad), y: C + r * Math.sin(rad) };
-}
-
-function arcPath(from: number, to: number) {
-  if (Math.abs(to - from) < 0.01) return "";
-  const a = Math.min(from, to);
-  const b = Math.max(from, to);
-  const p0 = polar(a);
-  const p1 = polar(b);
-  const large = b - a > 180 ? 1 : 0;
-  return `M ${p0.x} ${p0.y} A ${R} ${R} 0 ${large} 1 ${p1.x} ${p1.y}`;
-}
-
-const TRACK = arcPath(START, START + SWEEP);
 
 export function Knob({
   label,
@@ -84,10 +64,8 @@ export function Knob({
     dragging.current = false;
   }, []);
 
-  const angle = START + (value / 127) * SWEEP;
+  const norm = value / 127;
   const shown = toDisplay(value);
-  const origin = bipolar ? 0 : START;
-  const dot = polar(angle, R - 6);
 
   return (
     <div
@@ -104,6 +82,13 @@ export function Knob({
         aria-valuemin={0}
         aria-valuemax={displayMax}
         aria-valuenow={shown}
+        style={
+          {
+            "--p": norm,
+            "--a": `${(bipolar ? Math.min(norm, 0.5) : 0) * SWEEP}deg`,
+            "--b": `${(bipolar ? Math.max(norm, 0.5) : norm) * SWEEP}deg`,
+          } as React.CSSProperties
+        }
         tabIndex={disabled ? -1 : 0}
         onKeyDown={(e) => {
           if (disabled) return;
@@ -115,12 +100,7 @@ export function Knob({
           }
         }}
       >
-        <svg viewBox="0 0 36 36" aria-hidden="true">
-          <circle className="knob-cap" cx={C} cy={C} r={R - 3.5} />
-          <path className="knob-track" d={TRACK} />
-          <path className="knob-arc" d={arcPath(origin, angle)} />
-          <circle className="knob-dot" cx={dot.x} cy={dot.y} r={1.6} />
-        </svg>
+        <i />
       </div>
       <span className="knob-value">{displayValue}</span>
       <span className="knob-label">{label}</span>

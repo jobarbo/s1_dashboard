@@ -1,44 +1,64 @@
 /*
- * OP-XY inspired design system.
- * Black anodized chassis, recessed black "screens", flat keys, and the four
- * encoder colors (blue / green / gray / orange) used as functional accents.
+ * Hardware-panel design system, shared with s1-modular.
+ * Dark chassis with scanlines, screwed-on gradient modules, green LCD readouts,
+ * orange primary accent and teal secondary accent.
  */
 
 :root,
 [data-theme="dark"] {
-	--te-blue: #3d7bff;
-	--te-green: #1ed678;
-	--te-gray: #deded8;
-	--te-orange: #ff5b1a;
-	--te-red: #ff3b30;
+	/* s1-modular palette */
+	--bg: #0b0c0e;
+	--panel: #1b1d21;
+	--line: #2c3037;
+	--edge: #3a3f48;
+	--text: #d9dce1;
+	--dim: #7d8590;
+	--accent: #ff6a2a;
+	--accent2: #3ec7c2;
+	--warn: #f2c14e;
+	--bad: #ff5470;
+	--lcd-bg: #08100d;
+	--lcd: #7dffb0;
+	--lcd-dim: #3a7a58;
 
-	--bg: #0a0a0a;
-	--panel: #141414;
-	--panel-raised: #1b1b1b;
-	--key: #232323;
-	--key-hover: #2c2c2c;
-	--key-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 1px 0 rgba(0, 0, 0, 0.6);
-	--hairline: #262626;
-	--hairline-strong: #343434;
-	--text: #ededea;
-	--text-muted: #85857f;
-	--text-faint: #55554f;
-	--accent: var(--te-orange);
-	--on-accent: #0a0a0a;
-	--warn: var(--te-orange);
-	--error: var(--te-red);
-	--led-off: #3a3a3a;
+	/* Encoder / section color slots (cycled per section) */
+	--te-blue: #3ec7c2;
+	--te-green: #7dffb0;
+	--te-gray: #b4bac3;
+	--te-orange: #ff6a2a;
+	--te-red: #ff5470;
 
-	--knob-cap: #1f1f1f;
-	--knob-cap-edge: #2e2e2e;
-	--knob-track: #2c2c2c;
+	--panel-raised: #212429;
+	--module-bg: linear-gradient(180deg, #212429, #181a1e);
+	--module-shadow: inset 0 1px 0 #ffffff14, inset 0 0 0 1px #0004, 0 8px 18px #000a;
+	--key: linear-gradient(180deg, #3a3e45, #25282d);
+	--key-hover: linear-gradient(180deg, #43474f, #2b2e34);
+	--key-shadow: inset 0 1px 0 #ffffff22, 0 2px 3px #0008;
+	--key-edge: #000;
+	--hairline: var(--line);
+	--hairline-strong: var(--edge);
+	--text-muted: var(--dim);
+	--text-faint: #565d67;
+	--on-accent: #1a0b03;
+	--error: var(--bad);
+	--led-off: #3a1d12;
+	--scanlines: repeating-linear-gradient(0deg, #0e1013 0 2px, #0b0c0e 2px 4px);
 
-	--screen: #000;
-	--screen-edge: #1c1c1c;
-	--screen-text: #8a8a84;
+	--knob-hi: #5a5f69;
+	--knob-hi-hover: #666b76;
+	--knob-mid: #2a2d33;
+	--knob-lo: #1b1d21;
+	--knob-cap-edge: #000;
+	--knob-track: #2d3138;
+
+	--screen: var(--lcd-bg);
+	--screen-edge: #000;
+	--screen-text: var(--lcd-dim);
+	--screen-fg: var(--lcd);
+	--screen-shadow: inset 0 2px 6px #000, 0 1px 0 #ffffff14;
 
 	--overlay: rgba(0, 0, 0, 0.72);
-	--shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.6);
+	--shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.7);
 
 	/* Legacy aliases used by inline styles / older components */
 	--bg-card: var(--panel);
@@ -47,34 +67,52 @@
 	--viz-bg: var(--screen);
 	--viz-well: var(--screen);
 
-	--font-ui: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-	--font-text: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-	--radius: 10px;
-	--radius-sm: 6px;
+	--font-ui: ui-monospace, SFMono-Regular, Menlo, monospace;
+	--font-text: system-ui, -apple-system, "Segoe UI", sans-serif;
+	--radius: 6px;
+	--radius-sm: 4px;
 }
 
-/* Aluminium variant (OP-1 field / TP-7 silver) — screens stay black. */
+/* Light variant: pale hardware panel — LCD screens stay dark green. */
 [data-theme="light"] {
-	--bg: #cfcfca;
-	--panel: #e2e2de;
-	--panel-raised: #eaeae6;
-	--key: #f5f5f2;
-	--key-hover: #ffffff;
-	--key-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.12);
-	--hairline: rgba(0, 0, 0, 0.1);
-	--hairline-strong: rgba(0, 0, 0, 0.18);
-	--text: #111110;
-	--text-muted: #61615c;
-	--text-faint: #9a9a94;
-	--on-accent: #111110;
-	--led-off: #c4c4be;
+	--bg: #cfd1d4;
+	--panel: #e4e5e7;
+	--line: #b9bcc1;
+	--edge: #9ea2a9;
+	--text: #1a1c20;
+	--dim: #5d636c;
+	--accent: #e8531a;
+	--accent2: #1f9c97;
+	--warn: #b07d00;
+	--bad: #d6304f;
 
-	--knob-cap: #f3f3f0;
-	--knob-cap-edge: #c9c9c4;
-	--knob-track: rgba(0, 0, 0, 0.12);
+	--te-blue: #1f9c97;
+	--te-green: #2f9d62;
+	--te-gray: #6f747c;
+	--te-orange: #e8531a;
+	--te-red: #d6304f;
+
+	--panel-raised: #eceded;
+	--module-bg: linear-gradient(180deg, #f0f1f2, #dcdee0);
+	--module-shadow: inset 0 1px 0 #ffffffaa, inset 0 0 0 1px #0001, 0 6px 14px #0003;
+	--key: linear-gradient(180deg, #fbfbfb, #dedfe1);
+	--key-hover: linear-gradient(180deg, #ffffff, #e8e9ea);
+	--key-shadow: inset 0 1px 0 #fff, 0 2px 3px #0003;
+	--key-edge: #8a8e95;
+	--text-faint: #8d929a;
+	--on-accent: #fff;
+	--led-off: #c9b7ad;
+	--scanlines: repeating-linear-gradient(0deg, #d2d4d7 0 2px, #cfd1d4 2px 4px);
+
+	--knob-hi: #ffffff;
+	--knob-hi-hover: #ffffff;
+	--knob-mid: #dfe0e2;
+	--knob-lo: #b9bcc1;
+	--knob-cap-edge: #6f747c;
+	--knob-track: rgba(0, 0, 0, 0.14);
 
 	--overlay: rgba(40, 40, 36, 0.45);
-	--shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.25);
+	--shadow-pop: 0 24px 64px rgba(0, 0, 0, 0.3);
 }
 
 *,
@@ -97,18 +135,19 @@ html,
 body {
 	margin: 0;
 	height: 100%;
-	background: var(--bg);
+	background: var(--scanlines);
+	background-color: var(--bg);
 	color: var(--text);
 	font-family: var(--font-text);
-	font-size: 14px;
+	font-size: 12px;
 	line-height: 1.4;
 	-webkit-font-smoothing: antialiased;
 	scrollbar-width: thin;
-	scrollbar-color: var(--hairline-strong) transparent;
+	scrollbar-color: var(--edge) transparent;
 }
 
 :focus-visible {
-	outline: 2px solid var(--accent);
+	outline: 1px solid var(--accent);
 	outline-offset: 2px;
 }
 
@@ -133,55 +172,49 @@ body {
 	align-items: center;
 	gap: 0.75rem 1rem;
 	flex-shrink: 0;
+	padding: 10px 14px;
+	border: 1px solid #000;
+	border-radius: var(--radius);
+	background: var(--module-bg);
+	box-shadow: var(--module-shadow);
 }
 
 .brand {
 	display: flex;
-	align-items: center;
-	gap: 0.65rem;
+	align-items: baseline;
+	gap: 8px;
 }
 
 .brand-mark {
-	display: grid;
-	place-items: center;
-	width: 2.5rem;
-	height: 2.5rem;
-	border-radius: var(--radius-sm);
-	background: var(--screen);
-	box-shadow: inset 0 0 0 1px var(--screen-edge);
-	color: #f5f5f0;
-	font-family: var(--font-ui);
-	font-size: 0.85rem;
-	font-weight: 600;
-	letter-spacing: -0.02em;
-	position: relative;
+	font-family: var(--font-text);
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--accent);
+	text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .brand-mark::after {
-	content: "";
-	position: absolute;
-	top: 5px;
-	right: 5px;
-	width: 4px;
-	height: 4px;
-	border-radius: 50%;
-	background: var(--te-orange);
+	content: none;
 }
 
 .brand-text h1 {
 	margin: 0;
-	font-size: 0.82rem;
-	font-weight: 600;
-	letter-spacing: 0;
-	text-transform: lowercase;
-	color: var(--text);
+	font-size: 11px;
+	font-weight: 400;
+	letter-spacing: 4px;
+	text-transform: uppercase;
+	color: #aab0b9;
 }
 
 .subtitle {
 	margin: 0.1rem 0 0;
-	color: var(--text-muted);
-	font-size: 0.68rem;
-	text-transform: lowercase;
+	color: var(--dim);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 1.2px;
+	text-transform: uppercase;
 }
 
 .status-strip {
@@ -231,11 +264,14 @@ body {
 	gap: 1.1rem;
 	height: 2.25rem;
 	padding: 0 0.8rem;
-	border-radius: var(--radius-sm);
+	border: 1px solid #000;
+	border-radius: 3px;
 	background: var(--screen);
-	box-shadow: inset 0 0 0 1px var(--screen-edge);
-	color: #f5f5f0;
-	font-size: 0.7rem;
+	box-shadow: var(--screen-shadow);
+	color: var(--lcd);
+	font-family: var(--font-ui);
+	font-size: 11px;
+	text-transform: uppercase;
 	white-space: nowrap;
 	overflow: hidden;
 }
@@ -245,25 +281,25 @@ body {
 	align-items: center;
 	gap: 0.45rem;
 	font-weight: 600;
-	text-transform: lowercase;
 }
 
 .transport-led {
-	width: 7px;
-	height: 7px;
+	width: 8px;
+	height: 8px;
 	border-radius: 50%;
-	background: #3a3a3a;
+	background: #3a1d12;
+	box-shadow: inset 0 0 0 1px #000;
 	flex-shrink: 0;
 }
 
 .transport-led.is-live {
-	background: var(--te-green);
-	box-shadow: 0 0 8px var(--te-green);
+	background: var(--lcd);
+	box-shadow: 0 0 8px var(--lcd);
 }
 
 .transport-led.is-mock {
-	background: var(--te-blue);
-	box-shadow: 0 0 8px var(--te-blue);
+	background: var(--accent2);
+	box-shadow: 0 0 8px var(--accent2);
 }
 
 .transport-field {
@@ -271,20 +307,20 @@ body {
 	align-items: baseline;
 	gap: 0.4rem;
 	min-width: 0;
-	color: #d6d6d0;
+	color: var(--lcd-dim);
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
 .transport-field em {
 	font-style: normal;
-	font-size: 0.6rem;
-	color: var(--screen-text);
-	text-transform: lowercase;
+	font-size: 9.5px;
+	color: var(--lcd-dim);
 }
 
 .transport-field.is-on {
-	color: var(--te-green);
+	color: var(--lcd);
+	text-shadow: 0 0 6px #7dffb088;
 }
 
 .transport-keys {
@@ -313,7 +349,8 @@ body {
 	width: 1px;
 	height: 1.25rem;
 	margin: 0 0.2rem;
-	background: var(--hairline-strong);
+	background: #000;
+	box-shadow: 1px 0 0 #ffffff10;
 }
 
 /* Collapsible port/channel setup, revealed by the setup key */
@@ -323,9 +360,10 @@ body {
 	align-items: flex-end;
 	gap: 0.5rem 0.6rem;
 	padding: 0.55rem 0.65rem;
+	border: 1px solid #000;
 	border-radius: var(--radius);
-	background: var(--panel);
-	border: 1px solid var(--hairline);
+	background: var(--module-bg);
+	box-shadow: var(--module-shadow);
 	flex-shrink: 0;
 }
 
@@ -337,13 +375,14 @@ body {
 	gap: 0.4rem;
 	height: 1.6rem;
 	padding: 0 0.6rem;
-	border-radius: 999px;
-	background: var(--panel);
-	border: 1px solid var(--hairline);
-	color: var(--text-muted);
+	border: 1px solid #000;
+	border-radius: 3px;
+	background: var(--lcd-bg);
+	box-shadow: inset 0 2px 5px #000;
+	color: var(--lcd-dim);
 	font-family: var(--font-ui);
-	font-size: 0.68rem;
-	text-transform: lowercase;
+	font-size: 10.5px;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
@@ -352,26 +391,26 @@ body {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--led-off);
+	background: #3a1d12;
 	flex-shrink: 0;
 }
 
 .badge-ok {
-	color: var(--text);
+	color: var(--lcd);
 }
 
 .badge-ok::before {
-	background: var(--te-green);
-	box-shadow: 0 0 6px var(--te-green);
+	background: var(--lcd);
+	box-shadow: 0 0 6px var(--lcd);
 }
 
 .badge-warn {
-	color: var(--text);
+	color: var(--warn);
 }
 
 .badge-warn::before {
-	background: var(--te-orange);
-	box-shadow: 0 0 6px var(--te-orange);
+	background: var(--accent);
+	box-shadow: 0 0 6px var(--accent);
 }
 
 .tempo-badge {
@@ -389,28 +428,28 @@ body {
 	gap: 0.35rem;
 	height: 2rem;
 	padding: 0 0.85rem;
+	border: 1px solid var(--key-edge);
 	border-radius: var(--radius-sm);
-	border: 0;
 	background: var(--key);
 	box-shadow: var(--key-shadow);
 	color: var(--text);
 	cursor: pointer;
-	font-family: var(--font-ui);
-	font-size: 0.72rem;
-	font-weight: 500;
-	text-transform: lowercase;
-	transition:
-		background 0.12s,
-		transform 0.06s;
+	font-family: var(--font-text);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.8px;
+	text-transform: uppercase;
+	transition: transform 0.06s;
 }
 
 .btn:hover:not(:disabled) {
-	background: var(--key-hover);
+	color: var(--text);
+	box-shadow: var(--key-shadow), 0 0 0 1px var(--accent);
 }
 
 .btn:active:not(:disabled) {
 	transform: translateY(1px);
-	box-shadow: none;
+	box-shadow: inset 0 2px 4px #000a;
 }
 
 .btn:disabled {
@@ -419,28 +458,23 @@ body {
 }
 
 .btn-primary {
-	background: var(--accent);
-	color: var(--on-accent);
-	font-weight: 600;
+	color: var(--accent);
 }
 
 .btn-primary:hover:not(:disabled) {
-	background: #ff7440;
+	color: var(--accent);
 }
 
 .btn-ghost {
-	background: transparent;
-	box-shadow: none;
-	color: var(--text-muted);
+	color: var(--dim);
 }
 
 .btn-ghost:hover:not(:disabled) {
 	color: var(--text);
-	background: var(--key);
 }
 
 .btn-panic {
-	color: var(--te-red);
+	color: var(--bad);
 }
 
 /* Round function keys, like the OP-XY's top row */
@@ -449,10 +483,7 @@ body {
 	min-width: 2rem;
 	height: 2rem;
 	padding: 0;
-	border-radius: 50%;
-	background: var(--key);
-	box-shadow: var(--key-shadow);
-	color: var(--text-muted);
+	color: var(--dim);
 }
 
 .btn-icon:hover:not(:disabled) {
@@ -461,7 +492,7 @@ body {
 
 .btn-icon-active,
 .btn-icon-active:hover:not(:disabled) {
-	color: var(--te-orange);
+	color: var(--accent);
 }
 
 .lang-toggle {
@@ -470,31 +501,33 @@ body {
 	height: 2rem;
 	padding: 2px;
 	gap: 2px;
-	border-radius: 999px;
-	background: var(--key);
-	box-shadow: var(--key-shadow);
+	border: 1px solid #000;
+	border-radius: var(--radius-sm);
+	background: var(--lcd-bg);
+	box-shadow: inset 0 2px 5px #000;
 }
 
 .lang-toggle button {
 	padding: 0 0.6rem;
 	border: 0;
-	border-radius: 999px;
+	border-radius: 2px;
 	background: transparent;
-	color: var(--text-muted);
+	color: var(--lcd-dim);
 	font-family: var(--font-ui);
-	font-size: 0.66rem;
+	font-size: 10.5px;
 	font-weight: 600;
-	text-transform: lowercase;
+	text-transform: uppercase;
 	cursor: pointer;
 }
 
 .lang-toggle button:hover {
-	color: var(--text);
+	color: var(--lcd);
 }
 
 .lang-toggle button.is-active {
-	color: #f5f5f0;
-	background: var(--screen);
+	color: var(--lcd);
+	text-shadow: 0 0 6px #7dffb088;
+	background: #ffffff10;
 }
 
 /* ───────────────────────── Fields ───────────────────────── */
@@ -506,10 +539,13 @@ body {
 	flex-direction: column;
 	justify-content: flex-end;
 	gap: 0.25rem;
-	font-size: 0.62rem;
+	font-size: 9.5px;
+	font-weight: 700;
 	line-height: 1.15;
-	color: var(--text-muted);
-	text-transform: lowercase;
+	letter-spacing: 1.2px;
+	color: var(--dim);
+	text-transform: uppercase;
+	text-shadow: 0 1px 0 #000;
 }
 
 .channel-input input,
@@ -519,28 +555,21 @@ body {
 .ref-search input {
 	height: 2rem;
 	padding: 0 0.55rem;
-	background-color: var(--key);
-	border: 0;
-	border-radius: var(--radius-sm);
-	box-shadow: var(--key-shadow);
-	color: var(--text);
+	background-color: var(--lcd-bg);
+	border: 1px solid #000;
+	border-radius: 3px;
+	box-shadow: inset 0 2px 5px #000;
+	color: var(--lcd);
 	font-family: var(--font-ui);
-	font-size: 0.72rem;
+	font-size: 11px;
 }
 
 .port-select select,
 .select-control select {
-	appearance: none;
-	padding-right: 1.6rem;
-	background-image:
-		linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-		linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-	background-position:
-		calc(100% - 13px) 52%,
-		calc(100% - 9px) 52%;
-	background-size: 4px 4px;
-	background-repeat: no-repeat;
-	cursor: pointer;
+	width: 100%;
+	min-width: 5.5rem;
+	height: 1.75rem;
+	font-size: 10.5px;
 }
 
 .channel-input input {
@@ -565,6 +594,7 @@ body {
 	width: 2.4rem;
 	height: 1.35rem;
 	margin: 0;
+	border: 1px solid var(--key-edge);
 	border-radius: var(--radius-sm);
 	background:
 		radial-gradient(circle at 50% 50%, var(--led-off) 0 3px, transparent 3.5px),
@@ -581,7 +611,7 @@ body {
 .led-key:checked,
 .mock-toggle input:checked {
 	background:
-		radial-gradient(circle at 50% 50%, var(--te-orange) 0 3px, rgba(255, 91, 26, 0.35) 4px, transparent 7px),
+		radial-gradient(circle at 50% 50%, var(--accent) 0 3px, color-mix(in srgb, var(--accent) 40%, transparent) 4px, transparent 7px),
 		var(--key);
 }
 
@@ -595,12 +625,13 @@ body {
 .alert {
 	position: relative;
 	padding: 0.5rem 0.8rem 0.5rem 1.6rem;
+	border: 1px solid #000;
 	border-radius: var(--radius-sm);
-	background: var(--panel);
-	border: 1px solid var(--hairline);
-	color: var(--text-muted);
+	background: var(--module-bg);
+	box-shadow: var(--module-shadow);
+	color: var(--dim);
 	font-family: var(--font-text);
-	font-size: 0.78rem;
+	font-size: 11px;
 	flex-shrink: 0;
 }
 
@@ -612,7 +643,8 @@ body {
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	background: var(--te-blue);
+	background: var(--accent2);
+	box-shadow: 0 0 6px var(--accent2);
 }
 
 .alert strong {
@@ -625,7 +657,8 @@ body {
 }
 
 .alert-error::before {
-	background: var(--error);
+	background: var(--bad);
+	box-shadow: 0 0 6px var(--bad);
 }
 
 .midi-activity {
@@ -633,79 +666,89 @@ body {
 	flex-wrap: wrap;
 	gap: 1rem;
 	padding: 0.3rem 0.7rem;
-	border-radius: var(--radius-sm);
+	border: 1px solid #000;
+	border-radius: 3px;
 	background: var(--screen);
-	box-shadow: inset 0 0 0 1px var(--screen-edge);
-	font-size: 0.68rem;
+	box-shadow: var(--screen-shadow);
+	font-size: 10.5px;
 	font-family: var(--font-ui);
-	color: var(--te-green);
+	color: var(--lcd);
+	text-transform: uppercase;
 	flex-shrink: 0;
 }
 
 /* ───────────────────────── Panels ───────────────────────── */
 
 .section-card {
-	--sec: var(--text-muted);
-	background: var(--panel);
-	border: 1px solid var(--hairline);
+	position: relative;
+	background: var(--module-bg);
+	border: 1px solid #000;
 	border-radius: var(--radius);
+	box-shadow: var(--module-shadow);
 	overflow: hidden;
 }
 
-.sec-c0 {
-	--sec: var(--te-blue);
-}
-
-.sec-c1 {
-	--sec: var(--te-green);
-}
-
-.sec-c2 {
-	--sec: var(--te-gray);
-}
-
-.sec-c3 {
-	--sec: var(--te-orange);
-}
-
-[data-theme="light"] .sec-c2 {
-	--sec: #8f8f89;
+/* Four screws, one per corner, as on the s1-modular panels */
+.section-card::before {
+	content: "";
+	position: absolute;
+	inset: 5px;
+	pointer-events: none;
+	z-index: 1;
+	background:
+		radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 0 0 / 8px 8px no-repeat,
+		radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 100% 0 / 8px 8px no-repeat,
+		radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 0 100% / 8px 8px no-repeat,
+		radial-gradient(circle, #7a8089 0 1.5px, #2a2d33 2px 3px, transparent 3.5px) 100% 100% / 8px 8px no-repeat;
 }
 
 .section-card-header {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
-	padding: 0.45rem 0.7rem 0.3rem;
+	padding: 0.8rem 1rem 0.2rem;
 }
 
 .section-marker {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: var(--sec);
+	width: 6px;
+	height: 6px;
+	border-radius: 1px;
+	background: var(--accent);
+	box-shadow: 0 0 6px var(--accent);
 	flex-shrink: 0;
 }
 
 .section-card-header h2 {
 	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 8px;
 	flex: 1;
-	font-family: var(--font-ui);
-	font-size: 0.72rem;
-	font-weight: 600;
-	text-transform: lowercase;
-	letter-spacing: 0.01em;
-	color: var(--text);
+	font-family: var(--font-text);
+	font-size: 11px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 2.5px;
+	color: #b4bac3;
+	text-shadow: 0 1px 0 #000;
+}
+
+.section-card-header h2::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, var(--edge), transparent);
 }
 
 .section-index {
-	font-size: 0.62rem;
+	font-family: var(--font-ui);
+	font-size: 10px;
 	font-variant-numeric: tabular-nums;
-	color: var(--text-faint);
+	color: var(--lcd-dim);
 }
 
 .section-card-body {
-	padding: 0.4rem 0.7rem 0.65rem;
+	padding: 0.5rem 1rem 0.9rem;
 }
 
 .dash-top {
@@ -810,9 +853,10 @@ body {
 	display: flex;
 	flex-direction: column;
 	padding: 0.35rem 0.45rem 0.4rem;
-	border-radius: var(--radius-sm);
+	border: 1px solid #000;
+	border-radius: 3px;
 	background: var(--screen);
-	box-shadow: inset 0 0 0 1px var(--screen-edge);
+	box-shadow: var(--screen-shadow);
 }
 
 .dash-top .viz-block {
@@ -823,9 +867,10 @@ body {
 .viz-caption {
 	margin-bottom: 0.25rem;
 	font-family: var(--font-ui);
-	font-size: 0.6rem;
-	color: var(--screen-text);
-	text-transform: lowercase;
+	font-size: 9.5px;
+	color: var(--lcd-dim);
+	text-transform: uppercase;
+	letter-spacing: 1px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -886,11 +931,12 @@ body {
 
 .param-group-label {
 	margin: 0;
-	font-family: var(--font-ui);
-	font-size: 0.6rem;
-	font-weight: 500;
-	text-transform: lowercase;
-	color: var(--text-faint);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 1.2px;
+	text-transform: uppercase;
+	color: var(--dim);
+	text-shadow: 0 1px 0 #000;
 }
 
 .param-settings {
@@ -915,9 +961,12 @@ body {
 	display: inline-flex;
 	align-items: baseline;
 	gap: 0.3rem;
-	color: var(--text-muted);
-	font-size: 0.62rem;
-	text-transform: lowercase;
+	color: var(--dim);
+	font-size: 9.5px;
+	font-weight: 700;
+	letter-spacing: 1.2px;
+	text-transform: uppercase;
+	text-shadow: 0 1px 0 #000;
 }
 
 .toggle-row {
@@ -927,10 +976,11 @@ body {
 }
 
 .toggle-value {
-	color: var(--text);
+	color: var(--lcd);
+	font-family: var(--font-ui);
 	font-variant-numeric: tabular-nums;
-	font-size: 0.66rem;
-	text-transform: lowercase;
+	font-size: 10px;
+	text-transform: uppercase;
 }
 
 .select-control select {
@@ -953,86 +1003,89 @@ body {
 /* Encoders */
 .param-knob-row {
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-	gap: 0.5rem 0.25rem;
+	grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+	gap: 0.6rem 0.25rem;
 	justify-items: center;
 }
 
 .knob {
-	--knob-color: var(--te-blue);
+	--knob-color: var(--accent);
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 0.1rem;
+	gap: 0.25rem;
 	min-width: 0;
 }
 
-.knob-c0 {
-	--knob-color: var(--te-blue);
-}
-
-.knob-c1 {
-	--knob-color: var(--te-green);
-}
-
-.knob-c2 {
-	--knob-color: var(--te-gray);
-}
-
-.knob-c3 {
-	--knob-color: var(--te-orange);
-}
-
-[data-theme="light"] .knob-c2 {
-	--knob-color: #6f6f6a;
-}
-
 .knob-dial {
-	width: 38px;
-	height: 38px;
+	--a: 0deg;
+	--b: calc(var(--p) * 270deg);
+	position: relative;
+	width: 36px;
+	height: 36px;
+	margin: 6px 0;
 	cursor: ns-resize;
 	touch-action: none;
 	border-radius: 50%;
+	background: radial-gradient(circle at 35% 28%, var(--knob-hi), var(--knob-mid) 55%, var(--knob-lo));
+	border: 1px solid var(--knob-cap-edge);
+	box-shadow:
+		0 3px 5px #000c,
+		inset 0 1px 0 #ffffff30;
 }
 
-.knob-dial svg {
-	display: block;
-	width: 100%;
-	height: 100%;
-	overflow: visible;
+/* Value ring: dim 270° track with the active arc on top */
+.knob-dial::before {
+	content: "";
+	position: absolute;
+	inset: -6px;
+	border-radius: 50%;
+	pointer-events: none;
+	background:
+		conic-gradient(from -135deg, transparent 0 var(--a), var(--knob-color) var(--a) var(--b), transparent var(--b) 360deg),
+		conic-gradient(from -135deg, var(--knob-track) 0 270deg, transparent 270deg);
+	-webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+	mask: radial-gradient(circle closest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
 }
 
-.knob-cap {
-	fill: var(--knob-cap);
-	stroke: var(--knob-cap-edge);
-	stroke-width: 1;
+.knob-dial i {
+	position: absolute;
+	inset: 0;
+	transform: rotate(calc(-135deg + var(--p) * 270deg));
 }
 
-.knob-track,
-.knob-arc {
-	fill: none;
-	stroke-width: 2.5;
-	stroke-linecap: round;
+.knob-dial i::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 3px;
+	width: 3px;
+	height: 12px;
+	margin-left: -1.5px;
+	border-radius: 2px;
+	background: var(--knob-color);
+	box-shadow: 0 0 5px color-mix(in srgb, var(--knob-color) 60%, transparent);
 }
 
-.knob-track {
-	stroke: var(--knob-track);
+.knob-dial:hover {
+	background: radial-gradient(circle at 35% 28%, var(--knob-hi-hover), var(--knob-mid) 55%, var(--knob-lo));
 }
 
-.knob-arc {
-	stroke: var(--knob-color);
+.knob-dial:focus-visible {
+	outline: none;
 }
 
-.knob-dot {
-	fill: var(--knob-color);
+.knob-dial:active::before,
+.knob-dial:focus-visible::before {
+	filter: drop-shadow(0 0 4px var(--knob-color));
 }
 
 .knob.disabled .knob-dial {
 	cursor: default;
 }
 
-.knob.disabled .knob-arc,
-.knob.disabled .knob-dot {
+.knob.disabled .knob-dial::before,
+.knob.disabled .knob-dial i {
 	opacity: 0.45;
 }
 
@@ -1041,22 +1094,33 @@ body {
 }
 
 .knob-value {
+	display: block;
+	min-width: 100%;
+	padding: 0 0.3rem;
+	border: 1px solid #000;
+	border-radius: 2px;
+	background: var(--lcd-bg);
+	box-shadow: inset 0 1px 3px #000;
 	font-family: var(--font-ui);
-	font-size: 0.68rem;
-	font-weight: 500;
+	font-size: 10px;
 	font-variant-numeric: tabular-nums;
-	color: var(--text);
-	line-height: 1.1;
+	color: var(--lcd);
+	line-height: 1.5;
+	text-align: center;
+	white-space: nowrap;
 }
 
 .knob-label {
 	display: block;
 	max-width: 72px;
-	font-size: 0.58rem;
+	font-size: 9px;
+	font-weight: 700;
+	letter-spacing: 1.2px;
 	line-height: 1.15;
-	color: var(--text-muted);
+	color: var(--dim);
 	text-align: center;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	text-shadow: 0 1px 0 #000;
 	overflow-wrap: anywhere;
 }
 
@@ -1086,9 +1150,10 @@ body {
 
 .editor-footer p {
 	margin: 0;
-	font-size: 0.6rem;
+	font-size: 9.5px;
+	letter-spacing: 1px;
 	color: var(--text-faint);
-	text-transform: lowercase;
+	text-transform: uppercase;
 }
 
 /* ───────────────────────── Reference modal ───────────────────────── */
@@ -1116,9 +1181,9 @@ body {
 	width: min(72rem, 100%);
 	height: 92dvh;
 	margin: 0;
-	border: 1px solid var(--hairline-strong);
-	border-radius: 14px;
-	background: var(--panel);
+	border: 1px solid #000;
+	border-radius: var(--radius);
+	background: var(--module-bg);
 	box-shadow: var(--shadow-pop);
 	display: flex;
 	flex-direction: column;
@@ -1142,7 +1207,8 @@ body {
 	font-family: var(--font-ui);
 	font-size: 1.05rem;
 	font-weight: 600;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
 }
 
 .ref-modal-header p {
@@ -1189,7 +1255,8 @@ body {
 	font-family: var(--font-ui);
 	font-size: 0.66rem;
 	font-weight: 500;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	color: var(--text-faint);
 }
 
@@ -1215,7 +1282,8 @@ body {
 	color: var(--text-muted);
 	font-family: var(--font-ui);
 	font-size: 0.76rem;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	text-align: left;
 	cursor: pointer;
 	line-height: 1.35;
@@ -1228,7 +1296,7 @@ body {
 
 .ref-toc button.is-active {
 	background: var(--screen);
-	color: #f5f5f0;
+	color: var(--lcd);
 }
 
 .ref-toc-count {
@@ -1239,7 +1307,7 @@ body {
 }
 
 .ref-toc button.is-active .ref-toc-count {
-	color: var(--te-orange);
+	color: var(--accent);
 }
 
 .ref-empty {
@@ -1262,7 +1330,8 @@ body {
 	font-family: var(--font-ui);
 	font-size: 0.95rem;
 	font-weight: 600;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
 	color: var(--text);
 }
 
@@ -1284,7 +1353,8 @@ body {
 	padding: 0.85rem 0.95rem;
 	border-radius: var(--radius);
 	background: var(--panel-raised);
-	border: 1px solid var(--hairline);
+	border: 1px solid #000;
+	box-shadow: inset 0 1px 0 #ffffff10;
 }
 
 .ref-entry-head {
@@ -1340,7 +1410,8 @@ body {
 	font-family: var(--font-ui);
 	font-size: 0.66rem;
 	font-weight: 500;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	color: var(--text-muted);
 }
 
@@ -1394,7 +1465,8 @@ body {
 	font-family: var(--font-ui);
 	font-weight: 500;
 	font-size: 0.7rem;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	padding-top: 0.15rem;
 }
 
@@ -1423,7 +1495,8 @@ body {
 	border-top: none;
 	font-family: var(--font-ui);
 	font-size: 0.66rem;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	color: var(--text-faint);
 	font-weight: 500;
 }
@@ -1488,9 +1561,9 @@ body {
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--hairline-strong);
-	border-radius: 14px;
-	background: var(--panel);
+	border: 1px solid #000;
+	border-radius: var(--radius);
+	background: var(--module-bg);
 	box-shadow: var(--shadow-pop);
 	font-family: var(--font-ui);
 }
@@ -1507,7 +1580,8 @@ body {
 	margin: 0;
 	font-size: 0.9rem;
 	font-weight: 600;
-	text-transform: lowercase;
+	text-transform: uppercase;
+	letter-spacing: 1.5px;
 }
 
 .snapshots-body {
@@ -1548,7 +1622,8 @@ body {
 	padding: 0.6rem 0.7rem;
 	border-radius: var(--radius);
 	background: var(--panel-raised);
-	border: 1px solid var(--hairline);
+	border: 1px solid #000;
+	box-shadow: inset 0 1px 0 #ffffff10;
 	display: flex;
 	flex-direction: column;
 	gap: 0.45rem;
@@ -1592,13 +1667,14 @@ body {
 	padding: 0.6rem 0.7rem;
 	border-radius: var(--radius);
 	background: var(--panel-raised);
-	border: 1px solid var(--hairline);
+	border: 1px solid #000;
+	box-shadow: inset 0 1px 0 #ffffff10;
 	cursor: pointer;
 }
 
 .checklist-item input {
 	margin-top: 0.2rem;
-	accent-color: var(--te-orange);
+	accent-color: var(--accent);
 }
 
 .checklist-item strong {

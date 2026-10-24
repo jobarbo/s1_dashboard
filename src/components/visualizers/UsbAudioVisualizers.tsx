@@ -77,7 +77,7 @@ export function UsbAudioWaveform({analyser, active}: UsbAudioWaveformProps) {
 			ctx.stroke();
 
 			ctx.fillStyle = viz.envLabel;
-			ctx.font = `${Math.max(9, 10 * dpr)}px "IBM Plex Mono", ui-monospace, monospace`;
+			ctx.font = `${Math.max(9, 10 * dpr)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
 			ctx.textAlign = "right";
 			ctx.textBaseline = "middle";
 			ctx.fillText("255", padL - 4 * dpr, midY - halfH);

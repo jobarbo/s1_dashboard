@@ -4,8 +4,8 @@
   "description": "Unofficial Roland AIRA Compact S-1 web editor over USB MIDI.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#0a0a0a",
+  "background_color": "#0b0c0e",
+  "theme_color": "#0b0c0e",
   "lang": "en",
   "icons": [
     {

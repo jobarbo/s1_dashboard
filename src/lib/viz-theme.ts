@@ -32,21 +32,22 @@ export interface VizPalette {
 }
 
 /**
- * OP-XY screen palette: black display, white primary trace, and the four
- * encoder colors (blue, green, light gray, orange) for secondary traces.
+ * Shared with s1-modular: dark-green LCD screen, phosphor-green primary trace,
+ * orange accent and teal secondary accent.
  */
-const TE_BLUE = "61, 123, 255";
-const TE_GREEN = "30, 214, 120";
-const TE_GRAY = "222, 222, 216";
-const TE_ORANGE = "255, 91, 26";
+const LCD = "125, 255, 176";
+const TE_BLUE = "62, 199, 194";
+const TE_GREEN = LCD;
+const TE_GRAY = "180, 186, 195";
+const TE_ORANGE = "255, 106, 42";
 
 const DARK: VizPalette = {
-  wave: "rgba(245, 245, 240, 0.95)",
-  waveSoft: "rgba(245, 245, 240, 0.7)",
-  grid: "rgba(255, 255, 255, 0.07)",
-  gridMid: "rgba(255, 255, 255, 0.2)",
-  glow: "rgb(255, 255, 250)",
-  shadow: "rgba(255, 255, 255, 0.25)",
+  wave: `rgba(${LCD}, 0.95)`,
+  waveSoft: `rgba(${LCD}, 0.7)`,
+  grid: `rgba(${LCD}, 0.07)`,
+  gridMid: `rgba(${LCD}, 0.2)`,
+  glow: `rgb(${LCD})`,
+  shadow: `rgba(${LCD}, 0.3)`,
   lfo: `rgba(${TE_BLUE}, 1)`,
   lfoDot: `rgba(${TE_GRAY}, 1)`,
   filter: `rgba(${TE_ORANGE}, 1)`,
@@ -66,10 +67,10 @@ const DARK: VizPalette = {
     release: `rgb(${TE_ORANGE})`,
   },
   ampTone: `rgb(${TE_GREEN})`,
-  ampWave: "rgba(245, 245, 240, 0.95)",
+  ampWave: `rgba(${LCD}, 0.95)`,
 };
 
-/** Plots stay as black "screens" on the aluminium light UI, so reuse the same palette. */
+/** Plots stay as dark LCD "screens" on the light UI, so reuse the same palette. */
 const LIGHT: VizPalette = DARK;
 
 export function getVizPalette(): VizPalette {
