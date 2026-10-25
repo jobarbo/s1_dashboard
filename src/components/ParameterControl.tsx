@@ -7,16 +7,15 @@ import {
   paramDisplayMax,
 } from "../lib/parameters";
 import type { ParameterState } from "../lib/patch-store";
-import { Knob } from "./Knob";
+import { Slider } from "./Slider";
 
 interface ParameterControlProps {
   state: ParameterState;
   disabled?: boolean;
-  colorIndex?: number;
   onChange: (id: string, value: number) => void;
 }
 
-export function ParameterControl({ state, disabled, colorIndex = 0, onChange }: ParameterControlProps) {
+export function ParameterControl({ state, disabled, onChange }: ParameterControlProps) {
   const { def, value, synced } = state;
   const display = formatParameterValue(def, value);
 
@@ -62,7 +61,7 @@ export function ParameterControl({ state, disabled, colorIndex = 0, onChange }: 
   }
 
   return (
-    <Knob
+    <Slider
       label={def.name}
       value={value}
       displayMax={paramDisplayMax(def)}
@@ -70,7 +69,6 @@ export function ParameterControl({ state, disabled, colorIndex = 0, onChange }: 
       synced={synced}
       disabled={disabled}
       bipolar={def.type === "bipolar"}
-      colorIndex={colorIndex}
       onChange={(v) => onChange(def.id, v)}
     />
   );
@@ -134,9 +132,8 @@ function ParamCluster({
   const knobs = items.filter((p) => !isSetting(p));
   if (items.length === 0) return null;
 
-  return (
-    <div className="param-group">
-      {label ? <h3 className="param-group-label">{label}</h3> : null}
+  const body = (
+    <>
       {settings.length > 0 && (
         <div className="param-settings">
           {settings.map((state) => (
@@ -150,19 +147,28 @@ function ParamCluster({
         </div>
       )}
       {knobs.length > 0 && (
-        <div className="param-knob-row">
-          {knobs.map((state, i) => (
+        <div className="param-slider-list">
+          {knobs.map((state) => (
             <ParameterControl
               key={state.def.id}
               state={state}
               disabled={disabled}
-              colorIndex={i}
               onChange={onChange}
             />
           ))}
         </div>
       )}
-    </div>
+    </>
+  );
+
+  if (!label) return <div className="param-group">{body}</div>;
+
+  // Named groups collapse like the drawers in s1-modular.
+  return (
+    <details className="param-group" open>
+      <summary className="param-group-label">{label}</summary>
+      <div className="param-group-body">{body}</div>
+    </details>
   );
 }
 
